@@ -1,6 +1,10 @@
+'use client'
+
 import { TutorialStep } from "./tutorial-step";
 import { CodeBlock } from "./code-block";
-
+import * as XLSX from 'xlsx';
+import { createClient } from '@supabase/supabase-js'
+import { processExcel } from '@/app/data-formater';
 const create = `create table notes (
   id bigserial primary key,
   title text
@@ -47,31 +51,70 @@ export default function Page() {
 export default function FetchDataSteps() {
   return (
     <ol className="flex flex-col gap-6">
-      <TutorialStep title="Create some tables and insert some data">
-        <p>
-          Head over to the{" "}
-          <a
-            href="https://supabase.com/dashboard/project/_/editor"
-            className="font-bold hover:underline text-foreground/80"
-            target="_blank"
-            rel="noreferrer"
+      <TutorialStep title="Dados sobre a despesa">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+          <div className="flex flex-col">
+            <label htmlFor="month" className="mb-2 text-sm font-medium text-gray-800">Mês:</label>
+            <input 
+              type="number" 
+              id="month" 
+              name="month" 
+              min="1" 
+              max="12" 
+              required 
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="year" className="mb-2 text-sm font-medium text-gray-800">Ano:</label>
+            <input 
+              type="number" 
+              id="year" 
+              name="year" 
+              min="1900" 
+              max="2100" 
+              required 
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="startCol" className="mb-2 text-sm font-medium text-gray-800">Coluna Inicial:</label>
+            <input 
+              type="text" 
+              id="startCol" 
+              name="startCol" 
+              required 
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="endCol" className="mb-2 text-sm font-medium text-gray-800">Coluna Final:</label>
+            <input 
+              type="text" 
+              id="endCol" 
+              name="endCol" 
+              required 
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="file" className="mb-2 text-sm font-medium text-gray-800">Upload Arquivo (XLSX ou CSV):</label>
+            <input 
+              type="file" 
+              id="file" 
+              name="file" 
+              accept=".xlsx, .csv" 
+              required 
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <button 
+            type="submit" 
+            className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            Table Editor
-          </a>{" "}
-          for your Supabase project to create a table and insert some example
-          data. If you're stuck for creativity, you can copy and paste the
-          following into the{" "}
-          <a
-            href="https://supabase.com/dashboard/project/_/sql/new"
-            className="font-bold hover:underline text-foreground/80"
-            target="_blank"
-            rel="noreferrer"
-          >
-            SQL Editor
-          </a>{" "}
-          and click RUN!
-        </p>
-        <CodeBlock code={create} />
+            Upload
+          </button>
+        </form>
       </TutorialStep>
 
       <TutorialStep title="Query Supabase data from Next.js">
@@ -93,4 +136,66 @@ export default function FetchDataSteps() {
       </TutorialStep>
     </ol>
   );
+}
+
+function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const month = formData.get('month');
+  const year = formData.get('year');
+  const startCol = formData.get('startCol');
+  const endCol = formData.get('endCol');
+  const file = formData.get('file') as File;
+
+  if (!file) {
+    console.error('No file uploaded');
+    return;
+  }
+
+  async function uploadDataToSupabase(data: any) {
+    // Upload the formatted data to Supabase
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const user = await supabase.auth.getUser();
+    console.log("here", user);
+    const { error } = await supabase.from('Despesas').insert(data.map((row: any) => ({
+      mes: row[0],
+      ano: row[1],
+      'unidade_orcamentaria': row[2],
+      'fonte_de_recurso': row[3],
+      'elemento_despesa': row[4],
+      orcado: row[5],
+      saldo: row[6],
+      empenhado: row[7],
+      user_id: "833b515f-e2dd-495b-8901-fa15fc90b5ed"
+  })));;
+
+    if (error) {
+      console.error('Error uploading data to Supabase:', error);
+    } else {
+      console.log('Data uploaded successfully');
+    }
+  }
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      // Process the workbook and get the data
+      const processedData = processExcel(workbook, Number(startCol), Number(endCol));
+      console.log("processedData", processedData);
+      const dataToUpload = processedData.slice(1);
+      // Upload data to Supabase
+      const response = await uploadDataToSupabase(dataToUpload);
+
+      return response;
+    } catch (error) {
+      console.error('Error uploading data to Supabase:', error);
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
 }
