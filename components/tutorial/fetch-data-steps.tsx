@@ -118,7 +118,7 @@ export default function FetchDataSteps() {
         </form>
       </TutorialStep>
 
-      <TutorialStep title="Query Supabase data from Next.js">
+      {/* <TutorialStep title="Query Supabase data from Next.js">
         <p>
           To create a Supabase client and query data from an Async Server
           Component, create a new page.tsx file at{" "}
@@ -134,7 +134,7 @@ export default function FetchDataSteps() {
 
       <TutorialStep title="Build in a weekend and scale to millions!">
         <p>You're ready to launch your product to the world! 🚀</p>
-      </TutorialStep>
+      </TutorialStep> */}
     </ol>
   );
 }

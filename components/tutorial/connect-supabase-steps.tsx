@@ -3,7 +3,7 @@ import { TutorialStep } from "./tutorial-step";
 export default function ConnectSupabaseSteps() {
   return (
     <ol className="flex flex-col gap-6">
-      <TutorialStep title="Create Supabase project">
+      {/* <TutorialStep title="Create Supabase project">
         <p>
           Head over to{" "}
           <a
@@ -56,7 +56,7 @@ export default function ConnectSupabaseSteps() {
           You may need to refresh the page for Next.js to load the new
           environment variables.
         </p>
-      </TutorialStep>
+      </TutorialStep> */}
     </ol>
   );
 }
