@@ -5,6 +5,7 @@ import { CodeBlock } from "./code-block";
 import * as XLSX from 'xlsx';
 import { createClient } from '@supabase/supabase-js'
 import { processExcel } from '@/app/data-formater';
+import { processTable } from "@/app/table-formater";
 const create = `create table notes (
   id bigserial primary key,
   title text
@@ -158,8 +159,9 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const user = await supabase.auth.getUser();
+    
     console.log("here", user);
-    const { error } = await supabase.from('Despesas').insert(data.map((row: any) => ({
+    const { error } = await supabase.from('ibiraci.Despesas').insert(data.map((row: any) => ({
       mes: row[0],
       ano: row[1],
       'unidade_orcamentaria': row[2],
@@ -183,9 +185,11 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     try {
       const data = new Uint8Array(e.target?.result as ArrayBuffer);
       const workbook = XLSX.read(data, { type: 'array' });
-
+      const ano = formData.get('year');
+      const mes = formData.get('month');
+      const processedWorkbook = processTable(workbook, Number(mes), Number(ano), Number(startCol), Number(endCol))
       // Process the workbook and get the data
-      const processedData = processExcel(workbook, Number(startCol), Number(endCol));
+      const processedData = processExcel(processedWorkbook, Number(startCol), Number(endCol));
       console.log("processedData", processedData);
       const dataToUpload = processedData.slice(1);
       // Upload data to Supabase
