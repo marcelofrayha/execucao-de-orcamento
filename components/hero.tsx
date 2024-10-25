@@ -10,11 +10,11 @@ export default function Header() {
           target="_blank"
           rel="noreferrer"
         >
-          <SupabaseLogo />
+          {/* <SupabaseLogo /> */}
         </a>
         <span className="border-l rotate-45 h-6" />
         <a href="https://nextjs.org/" target="_blank" rel="noreferrer">
-          <NextLogo />
+          {/* <NextLogo /> */}
         </a>
       </div>
       <h1 className="sr-only">Análise de Orçamento Municipal da KOI</h1>
