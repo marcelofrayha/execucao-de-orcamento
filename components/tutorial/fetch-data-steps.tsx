@@ -49,11 +49,11 @@ export default function Page() {
 }
 `.trim();
 
-export default function FetchDataSteps() {
+export default function FetchDataSteps({ user_id }: { user_id: string }) {
   return (
     <ol className="flex flex-col gap-6">
       <TutorialStep title="Dados sobre a despesa">
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+        <form onSubmit={(e) => handleSubmit(e, user_id)} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
           <div className="flex flex-col">
             <label htmlFor="month" className="mb-2 text-sm font-medium text-gray-800">Mês:</label>
             <input 
@@ -139,7 +139,7 @@ export default function FetchDataSteps() {
   );
 }
 
-function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string) {
   event.preventDefault();
   const formData = new FormData(event.currentTarget);
   const month = formData.get('month');
@@ -158,10 +158,8 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const user = await supabase.auth.getUser();
     
-    console.log("here", user);
-    const { error } = await supabase.from('ibiraci.Despesas').insert(data.map((row: any) => ({
+    const { error } = await supabase.from('Despesas').insert(data.map((row: any) => ({
       mes: row[0],
       ano: row[1],
       'unidade_orcamentaria': row[2],
@@ -170,7 +168,7 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
       orcado: row[5],
       saldo: row[6],
       empenhado: row[7],
-      user_id: "833b515f-e2dd-495b-8901-fa15fc90b5ed"
+      user_id: user_id
   })));;
 
     if (error) {

@@ -30,7 +30,7 @@ export default async function ProtectedPage() {
       </div>
       <div>
         <h2 className="font-bold text-2xl mb-4">Insira os dados do orçamento</h2>
-        <FetchDataSteps />
+        <FetchDataSteps user_id={user.id} />
       </div>
     </div>
   );
