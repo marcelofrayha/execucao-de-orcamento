@@ -229,7 +229,6 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string, 
       const mes = formData.get('month');
       const processedWorkbook = processTable(workbook, Number(mes), Number(ano), Number(startCol), Number(endCol), tableType)
       const processedData = processExcel(processedWorkbook, Number(startCol), Number(endCol));
-      console.log("processedData", processedData);
       const dataToUpload = processedData.slice(1);
       setPreviewData(dataToUpload);
     } catch (error) {
@@ -249,7 +248,12 @@ async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'De
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+    },
+  });
   
   let formattedData;
   if (tableType === 'Despesas') {
@@ -275,6 +279,29 @@ async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'De
       receita: row[6],
       user_id: user_id
     }));
+  }
+  const { data: { session } } = await supabase.auth.getSession()
+  console.log('Current session:', session)
+
+  if (!session) {
+    console.error('No active session')
+    // Redirecionar para login ou mostrar mensagem de erro
+    const encodedSession = getCookie('sb-qhzgdekeaaqbqskrxvnd-auth-token');
+    const { access_token, refresh_token } = decodeSession(encodedSession);
+    console.log('Decoded session:', { access_token, refresh_token })
+    await supabase.auth.setSession({
+      access_token,
+      refresh_token
+    })
+    console.log('Session set:', session)
+    return
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    console.error('User not authenticated')
+    // Redirecionar para login ou mostrar mensagem de erro
+    return
   }
 
   const { error } = await supabase.from(tableType).insert(formattedData);
@@ -325,3 +352,26 @@ function sanityCheck(data: any[], tableType: 'Despesas' | 'Receitas'): boolean {
   console.log('Sanity check passou: Todos os dados estão presentes e a soma permanece aproximadamente igual.');
   return true;
 }
+
+function getCookie(name: string): string {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() ?? '';
+  return '';
+}
+
+function decodeSession(encodedSession: string): { access_token: string, refresh_token: string } {
+  try {
+    const decodedSession = atob(encodedSession.replace('base64-', ''));
+    const sessionData = JSON.parse(decodedSession);
+    return {
+      access_token: sessionData.access_token,
+      refresh_token: sessionData.refresh_token
+    };
+  } catch (error) {
+    console.error('Erro ao decodificar a sessão:', error);
+    return { access_token: '', refresh_token: '' };
+  }
+}
+
+
