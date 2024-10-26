@@ -53,11 +53,25 @@ export default function Page() {
 
 export default function FetchDataSteps({ user_id }: { user_id: string }) {
   const [previewData, setPreviewData] = useState<any[] | null>(null);
+  const [tableType, setTableType] = useState<'Despesas' | 'Receitas'>('Despesas');
 
   return (
     <ol className="flex flex-col gap-6">
-      <TutorialStep title="Dados sobre a despesa">
-        <form onSubmit={(e) => handleSubmit(e, user_id, setPreviewData)} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+      <TutorialStep title="Dados sobre a despesa ou receita">
+        <form onSubmit={(e) => handleSubmit(e, user_id, setPreviewData, tableType)} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+          <div className="flex flex-col">
+            <label htmlFor="tableType" className="mb-2 text-sm font-medium text-gray-800">Tipo de Tabela:</label>
+            <select 
+              id="tableType" 
+              name="tableType" 
+              value={tableType} 
+              onChange={(e) => setTableType(e.target.value as 'Despesas' | 'Receitas')}
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="Despesas">Despesas</option>
+              <option value="Receitas">Receitas</option>
+            </select>
+          </div>
           <div className="flex flex-col">
             <label htmlFor="month" className="mb-2 text-sm font-medium text-gray-800">Mês:</label>
             <input 
@@ -127,14 +141,28 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
               <table className="min-w-full bg-white border border-gray-300">
                 <thead>
                   <tr>
-                    <th className="px-4 py-2 border-b">Mês</th>
-                    <th className="px-4 py-2 border-b">Ano</th>
-                    <th className="px-4 py-2 border-b">Unidade Orçamentária</th>
-                    <th className="px-4 py-2 border-b">Fonte de Recurso</th>
-                    <th className="px-4 py-2 border-b">Elemento Despesa</th>
-                    <th className="px-4 py-2 border-b">Orçado</th>
-                    <th className="px-4 py-2 border-b">Saldo</th>
-                    <th className="px-4 py-2 border-b">Empenhado</th>
+                    {tableType === 'Despesas' ? (
+                      <>
+                        <th className="px-4 py-2 border-b">Mês</th>
+                        <th className="px-4 py-2 border-b">Ano</th>
+                        <th className="px-4 py-2 border-b">Unidade Orçamentária</th>
+                        <th className="px-4 py-2 border-b">Fonte de Recurso</th>
+                        <th className="px-4 py-2 border-b">Elemento Despesa</th>
+                        <th className="px-4 py-2 border-b">Orçado</th>
+                        <th className="px-4 py-2 border-b">Saldo</th>
+                        <th className="px-4 py-2 border-b">Empenhado</th>
+                      </>
+                    ) : (
+                      <>
+                      <th className="px-4 py-2 border-b">Mês</th>
+                      <th className="px-4 py-2 border-b">Ano</th>
+                        <th className="px-4 py-2 border-b">Descrição</th>
+                        <th className="px-4 py-2 border-b">Fonte de Recurso</th>
+                        <th className="px-4 py-2 border-b">Orçado</th>
+                        <th className="px-4 py-2 border-b">Saldo</th>
+                        <th className="px-4 py-2 border-b">Receita</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -150,7 +178,7 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             </div>
             <p className="mt-2 text-sm text-gray-600">Mostrando os primeiros 5 registros de {previewData.length} total.</p>
             <button 
-              onClick={() => uploadDataToSupabase(previewData, user_id)}
+              onClick={() => uploadDataToSupabase(previewData, user_id, tableType)}
               className="mt-4 px-4 py-2 font-semibold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
               Confirmar e Enviar para Supabase
@@ -180,11 +208,9 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
   );
 }
 
-function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string, setPreviewData: (data: any[] | null) => void) {
+function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string, setPreviewData: (data: any[] | null) => void, tableType: 'Despesas' | 'Receitas') {
   event.preventDefault();
   const formData = new FormData(event.currentTarget);
-  const month = formData.get('month');
-  const year = formData.get('year');
   const startCol = formData.get('startCol');
   const endCol = formData.get('endCol');
   const file = formData.get('file') as File;
@@ -201,7 +227,7 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string, 
       const workbook = XLSX.read(data, { type: 'array' });
       const ano = formData.get('year');
       const mes = formData.get('month');
-      const processedWorkbook = processTable(workbook, Number(mes), Number(ano), Number(startCol), Number(endCol))
+      const processedWorkbook = processTable(workbook, Number(mes), Number(ano), Number(startCol), Number(endCol), tableType)
       const processedData = processExcel(processedWorkbook, Number(startCol), Number(endCol));
       console.log("processedData", processedData);
       const dataToUpload = processedData.slice(1);
@@ -215,28 +241,87 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string, 
   reader.readAsArrayBuffer(file);
 }
 
-async function uploadDataToSupabase(data: any[], user_id: string) {
+async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'Despesas' | 'Receitas') {
+  if (!sanityCheck(data, tableType)) {
+    alert('Erro no sanity check. Por favor, verifique os dados.');
+    return;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
   
-  const { error } = await supabase.from('Despesas').insert(data.map((row: any) => ({
-    mes: row[0],
-    ano: row[1],
-    'unidade_orcamentaria': row[2],
-    'fonte_de_recurso': row[3],
-    'elemento_despesa': row[4],
-    orcado: row[5],
-    saldo: row[6],
-    empenhado: row[7],
-    user_id: user_id
-  })));
+  let formattedData;
+  if (tableType === 'Despesas') {
+    formattedData = data.map((row: any) => ({
+      mes: row[0],
+      ano: row[1],
+      'unidade_orcamentaria': row[2],
+      'fonte_de_recurso': row[3],
+      'elemento_despesa': row[4],
+      orcado: row[5],
+      saldo: row[6],
+      empenhado: row[7],
+      user_id: user_id
+    }));
+  } else {
+    formattedData = data.map((row: any) => ({
+      mes: row[0],
+      ano: row[1],
+      descricao: row[2],
+      'fonte_de_recurso': row[3],
+      orcado: row[4],
+      saldo: row[5],
+      receita: row[6],
+      user_id: user_id
+    }));
+  }
+
+  const { error } = await supabase.from(tableType).insert(formattedData);
 
   if (error) {
-    console.error('Error uploading data to Supabase:', error);
-    alert('Erro ao enviar dados para Supabase. Por favor, tente novamente.');
+    console.error(`Error uploading data to Supabase ${tableType} table:`, error);
+    alert(`Erro ao enviar dados para Supabase ${tableType}. Por favor, tente novamente.`);
   } else {
     console.log('Data uploaded successfully');
-    alert('Dados enviados com sucesso para Supabase!');
+    alert(`Dados enviados com sucesso para Supabase ${tableType}!`);
   }
+}
+
+function sanityCheck(data: any[], tableType: 'Despesas' | 'Receitas'): boolean {
+  if (data.length === 0) {
+    console.error('Erro: Nenhum dado para processar.');
+    return false;
+  }
+
+  const requiredFields = tableType === 'Despesas' 
+    ? ['mes', 'ano', 'unidade_orcamentaria', 'fonte_de_recurso', 'elemento_despesa', 'orcado', 'saldo', 'empenhado']
+    : ['descricao', 'fonte_de_recurso', 'orcado', 'saldo', 'receita'];
+
+  const allFieldsPresent = data.every(row => 
+    requiredFields.every((field, index) => row[index] !== undefined && row[index] !== null)
+  );
+
+  if (!allFieldsPresent) {
+    console.error('Erro: Alguns campos obrigatórios estão faltando ou são nulos.');
+    return false;
+  }
+
+  const numericFields = tableType === 'Despesas' 
+    ? [5, 6, 7]  // índices de orcado, saldo, empenhado
+    : [2, 3, 4]; // índices de orcado, saldo, receita
+
+  const originalSum = data.reduce((sum, row) => sum + numericFields.reduce((rowSum, index) => rowSum + (Number(row[index]) || 0), 0), 0);
+  const processedSum = data.reduce((sum, row) => sum + numericFields.reduce((rowSum, index) => rowSum + (Number(row[index]) || 0), 0), 0);
+
+  const tolerance = 0.01; // 1% de tolerância
+  const relativeDifference = Math.abs(originalSum - processedSum) / originalSum;
+
+  if (relativeDifference > tolerance) {
+    console.error(`Erro: A soma dos valores processados difere significativamente da original. Diferença relativa: ${(relativeDifference * 100).toFixed(2)}%`);
+    return false;
+  }
+
+  console.log('Sanity check passou: Todos os dados estão presentes e a soma permanece aproximadamente igual.');
+  return true;
 }

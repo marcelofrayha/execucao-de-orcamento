@@ -18,13 +18,22 @@ function convertToNumber(value: any): number {
     return isNaN(numValue) ? 0 : Math.round(numValue);
 }
 
-export function processTable(workbook: XLSX.WorkBook, month: number, year: number, minCol: number, maxCol: number): XLSX.WorkBook {
+export function processTable(workbook: XLSX.WorkBook, month: number, year: number, minCol: number, maxCol: number, tableType: 'Despesas' | 'Receitas'): XLSX.WorkBook {
     const sheetName = workbook.SheetNames[0];
     let worksheet = workbook.Sheets[sheetName];
 
     unmergeAllCells(worksheet);
 
     let data = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
+    
+    if (tableType === 'Despesas') {
+        return processDespesasTable(data, month, year, minCol, maxCol);
+    } else {
+        return processReceitasTable(data, month, year, minCol, maxCol);
+    }
+}
+
+function processDespesasTable(data: any[][], month: number, year: number, minCol: number, maxCol: number): XLSX.WorkBook {
     // Remove the first row
     data = data.slice(1);
 
@@ -119,3 +128,40 @@ export function processTable(workbook: XLSX.WorkBook, month: number, year: numbe
     return newWorkbook;
 }
 
+function processReceitasTable(data: any[][], month: number, year: number, minCol: number, maxCol: number): XLSX.WorkBook {
+    // Remove the first row if it's empty or contains header information
+    if (data[0].every(cell => cell === null || cell === undefined || cell === '')) {
+        data.shift();
+    }
+
+    // Find the indices of the required columns
+    const headerRow = data[0];
+    const columnIndices = {
+        descricao: headerRow.findIndex((cell: string) => cell.toLowerCase().includes('descrição')),
+        fonteRecurso: headerRow.findIndex((cell: string) => cell.toLowerCase().includes('fonte recurso')),
+        orcado: headerRow.findIndex((cell: string) => cell.toLowerCase().includes('orçado')),
+        saldo: headerRow.findIndex((cell: string) => cell.toLowerCase().includes('saldo')),
+        atePeriodo: headerRow.findIndex((cell: string) => cell.toLowerCase().includes('até o período'))
+    };
+
+    // Filter and rearrange the data
+    const processedData = data.slice(1).map(row => [
+        month,
+        year,
+        row[columnIndices.descricao],
+        row[columnIndices.fonteRecurso],
+        convertToNumber(row[columnIndices.orcado]),
+        convertToNumber(row[columnIndices.saldo]),
+        convertToNumber(row[columnIndices.atePeriodo])
+    ]);
+
+    // Add headers
+    processedData.unshift(['mes', 'ano', 'descricao', 'fonte_de_recurso', 'orcado', 'saldo', 'receita']);
+
+    // Create a new workbook and add the processed data
+    const newWorkbook = XLSX.utils.book_new();
+    const newWorksheet = XLSX.utils.aoa_to_sheet(processedData);
+    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'Processed Data');
+
+    return newWorkbook;
+}
