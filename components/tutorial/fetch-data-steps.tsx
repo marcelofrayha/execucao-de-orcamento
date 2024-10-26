@@ -6,6 +6,8 @@ import * as XLSX from 'xlsx';
 import { createClient } from '@supabase/supabase-js'
 import { processExcel } from '@/app/data-formater';
 import { processTable } from "@/app/table-formater";
+import { useState } from 'react';
+
 const create = `create table notes (
   id bigserial primary key,
   title text
@@ -50,10 +52,12 @@ export default function Page() {
 `.trim();
 
 export default function FetchDataSteps({ user_id }: { user_id: string }) {
+  const [previewData, setPreviewData] = useState<any[] | null>(null);
+
   return (
     <ol className="flex flex-col gap-6">
       <TutorialStep title="Dados sobre a despesa">
-        <form onSubmit={(e) => handleSubmit(e, user_id)} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+        <form onSubmit={(e) => handleSubmit(e, user_id, setPreviewData)} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
           <div className="flex flex-col">
             <label htmlFor="month" className="mb-2 text-sm font-medium text-gray-800">Mês:</label>
             <input 
@@ -116,6 +120,43 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             Upload
           </button>
         </form>
+        {previewData && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">Preview dos dados processados:</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-300">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 border-b">Mês</th>
+                    <th className="px-4 py-2 border-b">Ano</th>
+                    <th className="px-4 py-2 border-b">Unidade Orçamentária</th>
+                    <th className="px-4 py-2 border-b">Fonte de Recurso</th>
+                    <th className="px-4 py-2 border-b">Elemento Despesa</th>
+                    <th className="px-4 py-2 border-b">Orçado</th>
+                    <th className="px-4 py-2 border-b">Saldo</th>
+                    <th className="px-4 py-2 border-b">Empenhado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewData.slice(0, 5).map((row, index) => (
+                    <tr key={index}>
+                      {row.map((cell: any, cellIndex: number) => (
+                        <td key={cellIndex} className="px-4 py-2 border-b">{cell}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-sm text-gray-600">Mostrando os primeiros 5 registros de {previewData.length} total.</p>
+            <button 
+              onClick={() => uploadDataToSupabase(previewData, user_id)}
+              className="mt-4 px-4 py-2 font-semibold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              Confirmar e Enviar para Supabase
+            </button>
+          </div>
+        )}
       </TutorialStep>
 
       {/* <TutorialStep title="Query Supabase data from Next.js">
@@ -139,7 +180,7 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
   );
 }
 
-function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string) {
+function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string, setPreviewData: (data: any[] | null) => void) {
   event.preventDefault();
   const formData = new FormData(event.currentTarget);
   const month = formData.get('month');
@@ -153,31 +194,6 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string) 
     return;
   }
 
-  async function uploadDataToSupabase(data: any) {
-    // Upload the formatted data to Supabase
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
-    const { error } = await supabase.from('Despesas').insert(data.map((row: any) => ({
-      mes: row[0],
-      ano: row[1],
-      'unidade_orcamentaria': row[2],
-      'fonte_de_recurso': row[3],
-      'elemento_despesa': row[4],
-      orcado: row[5],
-      saldo: row[6],
-      empenhado: row[7],
-      user_id: user_id
-  })));;
-
-    if (error) {
-      console.error('Error uploading data to Supabase:', error);
-    } else {
-      console.log('Data uploaded successfully');
-    }
-  }
-
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
@@ -186,18 +202,41 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string) 
       const ano = formData.get('year');
       const mes = formData.get('month');
       const processedWorkbook = processTable(workbook, Number(mes), Number(ano), Number(startCol), Number(endCol))
-      // Process the workbook and get the data
       const processedData = processExcel(processedWorkbook, Number(startCol), Number(endCol));
       console.log("processedData", processedData);
       const dataToUpload = processedData.slice(1);
-      // Upload data to Supabase
-      const response = await uploadDataToSupabase(dataToUpload);
-
-      return response;
+      setPreviewData(dataToUpload);
     } catch (error) {
-      console.error('Error uploading data to Supabase:', error);
+      console.error('Error processing data:', error);
+      setPreviewData(null);
     }
   };
 
   reader.readAsArrayBuffer(file);
+}
+
+async function uploadDataToSupabase(data: any[], user_id: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  
+  const { error } = await supabase.from('Despesas').insert(data.map((row: any) => ({
+    mes: row[0],
+    ano: row[1],
+    'unidade_orcamentaria': row[2],
+    'fonte_de_recurso': row[3],
+    'elemento_despesa': row[4],
+    orcado: row[5],
+    saldo: row[6],
+    empenhado: row[7],
+    user_id: user_id
+  })));
+
+  if (error) {
+    console.error('Error uploading data to Supabase:', error);
+    alert('Erro ao enviar dados para Supabase. Por favor, tente novamente.');
+  } else {
+    console.log('Data uploaded successfully');
+    alert('Dados enviados com sucesso para Supabase!');
+  }
 }
