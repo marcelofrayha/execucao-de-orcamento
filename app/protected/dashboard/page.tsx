@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@supabase/supabase-js'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
 interface ValoresAgregados {
@@ -39,15 +39,15 @@ interface ValoresAgregados {
     total_receita: number
   }
 
-export default function Dashboard() {
-    const [despesasPorUnidade, setDespesasPorUnidade] = useState<DespesasPorUnidade[]>([])
-    const [despesasPorFonte, setDespesasPorFonte] = useState<DespesasPorFonte[]>([])
-    const [despesasPorElemento, setDespesasPorElemento] = useState<DespesasPorElemento[]>([])
-    const [receitasPorDescricao, setReceitasPorDescricao] = useState<ReceitaPorDescricao[]>([])
-    const [receitasPorFonte, setReceitasPorFonte] = useState<ReceitaPorFonte[]>([])
-   
+function DashboardContent() {
+  const [despesasPorUnidade, setDespesasPorUnidade] = useState<DespesasPorUnidade[]>([])
+  const [despesasPorFonte, setDespesasPorFonte] = useState<DespesasPorFonte[]>([])
+  const [despesasPorElemento, setDespesasPorElemento] = useState<DespesasPorElemento[]>([])
+  const [receitasPorDescricao, setReceitasPorDescricao] = useState<ReceitaPorDescricao[]>([])
+  const [receitasPorFonte, setReceitasPorFonte] = useState<ReceitaPorFonte[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
   const searchParams = useSearchParams()
   const router = useRouter()
   const user_id = searchParams.get('user_id')
@@ -304,5 +304,14 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Componente wrapper com Suspense
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div className="p-4">Carregando...</div>}>
+      <DashboardContent />
+    </Suspense>
   )
 }
