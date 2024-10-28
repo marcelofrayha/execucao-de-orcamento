@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js'
 import { processExcel } from '@/app/data-formater';
 import { processTable } from "@/app/table-formater";
 import { useState } from 'react';
+import { redirect } from 'next/navigation';
 
 const create = `create table notes (
   id bigserial primary key,
@@ -131,7 +132,7 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             type="submit" 
             className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            Upload
+            Pré Visualizar
           </button>
         </form>
         {previewData && (
@@ -181,7 +182,7 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
               onClick={() => uploadDataToSupabase(previewData, user_id, tableType)}
               className="mt-4 px-4 py-2 font-semibold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
-              Confirmar e Enviar para Supabase
+              Confirmar e Enviar para Base de Dados
             </button>
           </div>
         )}
@@ -245,7 +246,6 @@ async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'De
     alert('Erro no sanity check. Por favor, verifique os dados.');
     return;
   }
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -284,24 +284,32 @@ async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'De
   console.log('Current session:', session)
 
   if (!session) {
-    console.error('No active session')
-    // Redirecionar para login ou mostrar mensagem de erro
-    const encodedSession = getCookie('sb-qhzgdekeaaqbqskrxvnd-auth-token');
-    const { access_token, refresh_token } = decodeSession(encodedSession);
-    console.log('Decoded session:', { access_token, refresh_token })
-    await supabase.auth.setSession({
-      access_token,
-      refresh_token
-    })
-    console.log('Session set:', session)
-    return
+    // Get the cookie name dynamically by finding the supabase cookie
+    const supabaseCookie = Object.keys(parseCookies()).find(key => 
+      key.startsWith('sb-') && key.endsWith('-auth-token')
+    );
+
+    if (supabaseCookie) {
+      const encodedSession = getCookie(supabaseCookie);
+      if (encodedSession) {
+        const { access_token, refresh_token } = decodeSession(encodedSession);
+        console.log('Decoded session:', { access_token, refresh_token })
+        await supabase.auth.setSession({
+          access_token,
+          refresh_token
+        })
+        // Buscar a nova sessão após setá-la
+        const { data: { session: newSession } } = await supabase.auth.getSession()
+        console.log('New session set:', newSession)
+      }
+    }
   }
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     console.error('User not authenticated')
     // Redirecionar para login ou mostrar mensagem de erro
-    return
+    return redirect('/login')
   }
 
   const { error } = await supabase.from(tableType).insert(formattedData);
@@ -312,6 +320,7 @@ async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'De
   } else {
     console.log('Data uploaded successfully');
     alert(`Dados enviados com sucesso para Supabase ${tableType}!`);
+    return redirect(`/protected/dashboard?user_id=${user_id}`)
   }
 }
 
@@ -374,4 +383,11 @@ function decodeSession(encodedSession: string): { access_token: string, refresh_
   }
 }
 
-
+// Helper function to parse all cookies
+function parseCookies(): { [key: string]: string } {
+  return document.cookie.split(';').reduce((cookies, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookies[name] = value;
+    return cookies;
+  }, {} as { [key: string]: string });
+}

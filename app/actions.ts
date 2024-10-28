@@ -12,7 +12,7 @@ export const signUpAction = async (formData: FormData) => {
   const origin = (await headers()).get("origin");
 
   if (!email || !password) {
-    return { error: "Email and password are required" };
+    return { error: "Email e senha são obrigatórios" };
   }
 
   const { error } = await supabase.auth.signUp({
@@ -30,7 +30,7 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect(
       "success",
       "/sign-up",
-      "Thanks for signing up! Please check your email for a verification link.",
+      "Obrigado por se registrar.Verifique seu email para confirmar o cadastro.",
     );
   }
 };

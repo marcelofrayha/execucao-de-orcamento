@@ -91,11 +91,47 @@ function processDespesasTable(data: any[][], month: number, year: number, minCol
     // Remove the first column
     data.forEach(row => row.shift());
 
-    // Remove the first row
-    data.shift();
-    // Select only the desired columns
-    const desiredColumns = [0, 1, 2, 3, 7, 9];
+  
+
+    // Find column indices based on header names
+    const headerRow = data[0];
+    const columnIndices = {
+        unidadeOrcamentaria: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Unidade Orçamentária')),
+        fonteRecurso: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Fonte Recurso')),
+        elementoDespesa: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Elemento Despesa')),
+        orcado: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Orçado')),
+        saldo: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Saldo')),
+        empenhadoAte: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Empenhado Até'))
+    };
+    console.log(columnIndices);
+    // Validate that all required columns were found
+    const missingColumns = Object.entries(columnIndices)
+        .filter(([_, index]) => index === -1)
+        .map(([name]) => name);
+
+    if (missingColumns.length > 0) {
+        throw new Error(`Colunas não encontradas: ${missingColumns.join(', ')}`);
+    }
+
+    // Select only the desired columns using the found indices
+    const desiredColumns = [
+        columnIndices.unidadeOrcamentaria,
+        columnIndices.fonteRecurso,
+        columnIndices.elementoDespesa,
+        columnIndices.orcado,
+        columnIndices.saldo,
+        columnIndices.empenhadoAte
+    ];
+  // Remove the first row
+  data.shift();
     data = data.map(row => desiredColumns.map(col => row[col]));
+
     // Rename the columns
     const headers = [
         "unidade_orcamentaria",
