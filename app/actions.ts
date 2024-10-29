@@ -30,7 +30,7 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect(
       "success",
       "/sign-up",
-      "Obrigado por se registrar.Verifique seu email para confirmar o cadastro.",
+      "Obrigado por se registrar. Verifique seu email para confirmar o cadastro.",
     );
   }
 };
