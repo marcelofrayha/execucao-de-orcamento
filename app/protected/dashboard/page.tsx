@@ -3,6 +3,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { agregadorUnidadeOrcamentaria, agregadorFonteRecurso, agregadorElementoDespesa } from './agregadores'
 
 interface ValoresAgregados {
     total_orcado: number
@@ -116,36 +117,66 @@ function DashboardContent() {
 
          // Agregar despesas por Unidade Orçamentária
          const unidadeMap = new Map<string, ValoresAgregados>()
-         despesasResponse.data.forEach((d) => {
-           const existing = unidadeMap.get(d.unidade_orcamentaria) || { total_orcado: 0, total_saldo: 0, total_empenhado: 0 }
-           unidadeMap.set(d.unidade_orcamentaria, {
-             total_orcado: existing.total_orcado + d.orcado,
-             total_saldo: existing.total_saldo + d.saldo,
-             total_empenhado: existing.total_empenhado + d.empenhado
-           })
-         })
+            despesasResponse.data.forEach((d) => {
+            // Get the mapped unit or use the original if no mapping exists
+            const mappedUnidade = agregadorUnidadeOrcamentaria[String(d.unidade_orcamentaria)] || d.unidade_orcamentaria
+            
+            const existing = unidadeMap.get(mappedUnidade) || { 
+                total_orcado: 0, 
+                total_saldo: 0, 
+                total_empenhado: 0 
+            }
+            
+            unidadeMap.set(mappedUnidade, {
+                total_orcado: existing.total_orcado + d.orcado,
+                total_saldo: existing.total_saldo + d.saldo,
+                total_empenhado: existing.total_empenhado + d.empenhado
+            })
+        })
  
          // Agregar despesas por Fonte de Recurso
          const fonteMap = new Map<string, ValoresAgregados>()
          despesasResponse.data.forEach((d) => {
-           const existing = fonteMap.get(d.fonte_de_recurso) || { total_orcado: 0, total_saldo: 0, total_empenhado: 0 }
-           fonteMap.set(d.fonte_de_recurso, {
-             total_orcado: existing.total_orcado + d.orcado,
-             total_saldo: existing.total_saldo + d.saldo,
-             total_empenhado: existing.total_empenhado + d.empenhado
-           })
-         })
+          // Get the mapped fonte or use the original if no mapping exists
+          const mappedFonte = agregadorFonteRecurso[String(d.fonte_de_recurso)] || d.fonte_de_recurso
+          
+          const existing = fonteMap.get(mappedFonte) || { 
+            total_orcado: 0, 
+            total_saldo: 0, 
+            total_empenhado: 0 
+        }
+  
+          fonteMap.set(mappedFonte, {
+            total_orcado: existing.total_orcado + d.orcado,
+            total_saldo: existing.total_saldo + d.saldo,
+            total_empenhado: existing.total_empenhado + d.empenhado
+          })
+        })
  
          // Agregar despesas por Elemento
          const elementoMap = new Map<string, ValoresAgregados>()
-         despesasResponse.data.forEach((d) => {
-           const existing = elementoMap.get(d.elemento_despesa) || { total_orcado: 0, total_saldo: 0, total_empenhado: 0 }
-           elementoMap.set(d.elemento_despesa, {
-             total_orcado: existing.total_orcado + d.orcado,
-             total_saldo: existing.total_saldo + d.saldo,
-             total_empenhado: existing.total_empenhado + d.empenhado
-           })
-         })
+            despesasResponse.data.forEach((d) => {
+            // Get the mapped elemento or use the original if no mapping exists
+            const mappedElemento = agregadorElementoDespesa[String(d.elemento_despesa)] || d.elemento_despesa
+            
+            const existing = elementoMap.get(mappedElemento) || { 
+                total_orcado: 0, 
+                total_saldo: 0, 
+                total_empenhado: 0 
+            }
+            
+            elementoMap.set(mappedElemento, {
+                total_orcado: existing.total_orcado + d.orcado,
+                total_saldo: existing.total_saldo + d.saldo,
+                total_empenhado: existing.total_empenhado + d.empenhado
+            })
+            })
+
+            // Transform the Map into an array for rendering
+            const despesasPorElemento = Array.from(elementoMap.entries()).map(([elemento_despesa, valores]) => ({
+            elemento_despesa,
+            valores
+        }))
  
          // Agregar receitas por Descrição
          const descricaoMap = new Map<string, { total_orcado: number, total_saldo: number, total_receita: number }>()
@@ -158,11 +189,17 @@ function DashboardContent() {
            })
          })
  
-         // Agregar receitas por Fonte
          const receitaFonteMap = new Map<string, { total_orcado: number, total_saldo: number, total_receita: number }>()
          receitasResponse.data.forEach((r) => {
-           const existing = receitaFonteMap.get(r.fonte_de_recurso) || { total_orcado: 0, total_saldo: 0, total_receita: 0 }
-           receitaFonteMap.set(r.fonte_de_recurso, {
+           const mappedFonte = agregadorFonteRecurso[String(r.fonte_de_recurso)] || r.fonte_de_recurso
+           
+           const existing = receitaFonteMap.get(mappedFonte) || { 
+             total_orcado: 0, 
+             total_saldo: 0, 
+             total_receita: 0 
+           }
+           
+           receitaFonteMap.set(mappedFonte, {
              total_orcado: existing.total_orcado + r.orcado,
              total_saldo: existing.total_saldo + r.saldo,
              total_receita: existing.total_receita + r.receita
@@ -299,31 +336,101 @@ function DashboardContent() {
         </div>
       </div>
 
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-center">Receitas por Descrição</h2>
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-center mb-4">Despesas por Fonte de Recurso</h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-300 dark:border-gray-700">
+        <table className="min-w-full border border-gray-300 dark:border-gray-700">
             <thead>
-              <tr className="bg-gray-100 dark:bg-gray-800">
-                <th className="px-4 py-2 text-left">Descrição</th>
+            <tr className="bg-gray-100 dark:bg-gray-800">
+                <th className="px-4 py-2 text-left">Fonte de Recurso</th>
                 <th className="px-4 py-2 text-left">Total Orçado</th>
                 <th className="px-4 py-2 text-left">Total Saldo</th>
-                <th className="px-4 py-2 text-left">Total Receita</th>
-              </tr>
+                <th className="px-4 py-2 text-left">Total Empenhado</th>
+            </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900">
-              {receitasPorDescricao.map((item, index) => (
+            {despesasPorFonte.map((item, index) => (
                 <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td className="px-4 py-2">{item.descricao}</td>
-                  <td className="px-4 py-2">{item.total_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-                  <td className="px-4 py-2">{item.total_saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-                  <td className="px-4 py-2">{item.total_receita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                <td className="px-4 py-2 text-gray-900 dark:text-primary">{item.fonte_de_recurso}</td>
+                <td className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                    {item.valores.total_orcado.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0 
+                    })}
+                </td>
+                <td className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                    {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0 
+                    })}
+                </td>
+                <td className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                    {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0 
+                    })}
+                </td>
                 </tr>
-              ))}
+            ))}
             </tbody>
-          </table>
+        </table>
         </div>
       </div>
+
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-center mb-4">Despesas por Elemento</h2>
+        <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-300 dark:border-gray-700">
+            <thead>
+            <tr className="bg-gray-100 dark:bg-gray-800">
+                <th className="px-4 py-2 text-left">Elemento da Despesa</th>
+                <th className="px-4 py-2 text-left">Total Orçado</th>
+                <th className="px-4 py-2 text-left">Total Saldo</th>
+                <th className="px-4 py-2 text-left">Total Empenhado</th>
+            </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-900">
+            {despesasPorElemento.map((item, index) => (
+                <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                <td className="px-4 py-2 text-gray-900 dark:text-primary">{item.elemento_despesa}</td>
+                <td className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                    {item.valores.total_orcado.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0 
+                    })}
+                </td>
+                <td className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                    {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0 
+                    })}
+                </td>
+                <td className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                    {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0 
+                    })}
+                </td>
+                </tr>
+            ))}
+            </tbody>
+        </table>
+        </div>
+      </div>
+
+
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4 text-center">Receitas por Fonte de Recurso</h2>
@@ -348,6 +455,34 @@ function DashboardContent() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+      
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4 text-center">Receitas por Descrição</h2>
+        <div className="overflow-x-auto">
+            <div className="max-h-96 overflow-y-auto"> {/* Set a fixed height and enable vertical scrolling */}
+            <table className="min-w-full border border-gray-300 dark:border-gray-700">
+                <thead>
+                <tr className="bg-gray-100 dark:bg-gray-800">
+                    <th className="px-4 py-2 text-left">Descrição</th>
+                    <th className="px-4 py-2 text-left">Total Orçado</th>
+                    <th className="px-4 py-2 text-left">Total Saldo</th>
+                    <th className="px-4 py-2 text-left">Total Receita</th>
+                </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-900">
+                {receitasPorDescricao.map((item, index) => ( // Limit to 10 entries
+                    <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="px-4 py-2">{item.descricao}</td>
+                    <td className="px-4 py-2">{item.total_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                    <td className="px-4 py-2">{item.total_saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                    <td className="px-4 py-2">{item.total_receita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+            </div>
         </div>
       </div>
     </div>
