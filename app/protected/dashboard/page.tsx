@@ -39,6 +39,27 @@ interface ValoresAgregados {
     total_receita: number
   }
 
+interface MonthOption {
+  value: number
+  label: string
+}
+
+const months: MonthOption[] = [
+  { value: 0, label: 'Todos os Meses' },
+  { value: 1, label: 'Janeiro' },
+  { value: 2, label: 'Fevereiro' },
+  { value: 3, label: 'Março' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Maio' },
+  { value: 6, label: 'Junho' },
+  { value: 7, label: 'Julho' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Setembro' },
+  { value: 10, label: 'Outubro' },
+  { value: 11, label: 'Novembro' },
+  { value: 12, label: 'Dezembro' }
+]
+
 function DashboardContent() {
   const [despesasPorUnidade, setDespesasPorUnidade] = useState<DespesasPorUnidade[]>([])
   const [despesasPorFonte, setDespesasPorFonte] = useState<DespesasPorFonte[]>([])
@@ -47,6 +68,7 @@ function DashboardContent() {
   const [receitasPorFonte, setReceitasPorFonte] = useState<ReceitaPorFonte[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState<number>(0)
   
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -54,7 +76,6 @@ function DashboardContent() {
 
   useEffect(() => {
     async function fetchData() {
-      // Add error handling for missing user_id
       if (!user_id) {
         setError('No user ID provided')
         setLoading(false)
@@ -67,8 +88,7 @@ function DashboardContent() {
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         )
 
-        // Fetch both despesas and receitas in parallel
-        const [despesasResponse, receitasResponse] = await Promise.all([
+        const queries = [
           supabase
             .from('Despesas')
             .select('*')
@@ -77,7 +97,14 @@ function DashboardContent() {
             .from('Receitas')
             .select('*')
             .eq('user_id', user_id)
-        ])
+        ]
+
+        if (selectedMonth > 0) {
+          queries[0] = queries[0].eq('mes', selectedMonth)
+          queries[1] = queries[1].eq('mes', selectedMonth)
+        }
+
+        const [despesasResponse, receitasResponse] = await Promise.all(queries)
 
         if (despesasResponse.error) {
           throw new Error(`Error fetching despesas: ${despesasResponse.error.message}`)
@@ -188,7 +215,7 @@ function DashboardContent() {
     }
 
     fetchData()
-  }, [user_id])
+  }, [user_id, selectedMonth])
 
   if (error) {
     return (
@@ -213,38 +240,58 @@ function DashboardContent() {
     )
   }
 
-  if (!despesasPorUnidade.length && !receitasPorDescricao.length) {
+  if (!despesasPorUnidade.length && !receitasPorDescricao.length && selectedMonth === 0) {
     return (
-      <div className="p-4">
+      <div className="p-4 text-center">
         <p>Nenhum dado encontrado para este usuário.</p>
         <p className="text-sm text-gray-500">User ID: {user_id}</p>
+        <button 
+          onClick={() => router.push('/protected')}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retornar
+        </button>
       </div>
     )
   }
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-2xl text-center font-bold mb-6">Dashboard</h1>
       
+      <div className="mb-6">
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(Number(e.target.value))}
+          className="block mx-auto w-64 p-2 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+        >
+          {months.map((month) => (
+            <option key={month.value} value={month.value}>
+              {month.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Despesas por Unidade Orçamentária</h2>
+        <h2 className="text-xl font-semibold text-center mb-4">Despesas por Unidade Orçamentária</h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300">
+          <table className="min-w-full border border-gray-300 dark:border-gray-700">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-2">Unidade Orçamentária</th>
-                <th className="px-4 py-2">Total Orçado</th>
-                <th className="px-4 py-2">Total Saldo</th>
-                <th className="px-4 py-2">Total Empenhado</th>
+              <tr className="bg-gray-100 dark:bg-gray-800">
+                <th className="px-4 py-2 text-left">Unidade Orçamentária</th>
+                <th className="px-4 py-2 text-left">Total Orçado</th>
+                <th className="px-4 py-2 text-left">Total Saldo</th>
+                <th className="px-4 py-2 text-left">Total Empenhado</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white dark:bg-gray-900">
               {despesasPorUnidade.map((item, index) => (
-                <tr key={index} className="border-t border-gray-300">
-                  <td className="px-4 py-2">{item.unidade_orcamentaria}</td>
-                  <td className="px-4 py-2">{item.valores.total_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                  <td className="px-4 py-2">{item.valores.total_saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                  <td className="px-4 py-2">{item.valores.total_empenhado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="px-4 py-2 text-gray-900 dark:text-primary">{item.unidade_orcamentaria}</td>
+                  <td className="px-4 py-2 text-gray-900 dark:text-gray-100">{item.valores.total_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                  <td className="px-4 py-2 text-gray-900 dark:text-gray-100">{item.valores.total_saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                  <td className="px-4 py-2 text-gray-900 dark:text-gray-100">{item.valores.total_empenhado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
                 </tr>
               ))}
             </tbody>
@@ -253,24 +300,24 @@ function DashboardContent() {
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Receitas por Descrição</h2>
+        <h2 className="text-xl font-semibold mb-4 text-center">Receitas por Descrição</h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300">
+          <table className="min-w-full border border-gray-300 dark:border-gray-700">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-2">Descrição</th>
-                <th className="px-4 py-2">Total Orçado</th>
-                <th className="px-4 py-2">Total Saldo</th>
-                <th className="px-4 py-2">Total Receita</th>
+              <tr className="bg-gray-100 dark:bg-gray-800">
+                <th className="px-4 py-2 text-left">Descrição</th>
+                <th className="px-4 py-2 text-left">Total Orçado</th>
+                <th className="px-4 py-2 text-left">Total Saldo</th>
+                <th className="px-4 py-2 text-left">Total Receita</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white dark:bg-gray-900">
               {receitasPorDescricao.map((item, index) => (
-                <tr key={index} className="border-t border-gray-300">
+                <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-4 py-2">{item.descricao}</td>
-                  <td className="px-4 py-2">{item.total_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                  <td className="px-4 py-2">{item.total_saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                  <td className="px-4 py-2">{item.total_receita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  <td className="px-4 py-2">{item.total_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                  <td className="px-4 py-2">{item.total_saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                  <td className="px-4 py-2">{item.total_receita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
                 </tr>
               ))}
             </tbody>
@@ -279,24 +326,24 @@ function DashboardContent() {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Receitas por Fonte de Recurso</h2>
+        <h2 className="text-xl font-semibold mb-4 text-center">Receitas por Fonte de Recurso</h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300">
+          <table className="min-w-full border border-gray-300 dark:border-gray-700">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-2">Fonte de Recurso</th>
-                <th className="px-4 py-2">Total Orçado</th>
-                <th className="px-4 py-2">Total Saldo</th>
-                <th className="px-4 py-2">Total Receita</th>
+              <tr className="bg-gray-100 dark:bg-gray-800">
+                <th className="px-4 py-2 text-left">Fonte de Recurso</th>
+                <th className="px-4 py-2 text-left">Total Orçado</th>
+                <th className="px-4 py-2 text-left">Total Saldo</th>
+                <th className="px-4 py-2 text-left">Total Receita</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white dark:bg-gray-900">
               {receitasPorFonte.map((item, index) => (
-                <tr key={index} className="border-t border-gray-300">
+                <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-4 py-2">{item.fonte_de_recurso}</td>
-                  <td className="px-4 py-2">{item.total_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                  <td className="px-4 py-2">{item.total_saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                  <td className="px-4 py-2">{item.total_receita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  <td className="px-4 py-2">{item.total_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                  <td className="px-4 py-2">{item.total_saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                  <td className="px-4 py-2">{item.total_receita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
                 </tr>
               ))}
             </tbody>
