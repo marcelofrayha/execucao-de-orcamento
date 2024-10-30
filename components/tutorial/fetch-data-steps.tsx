@@ -293,7 +293,6 @@ async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'De
       const encodedSession = getCookie(supabaseCookie);
       if (encodedSession) {
         const { access_token, refresh_token } = decodeSession(encodedSession);
-        console.log('Decoded session:', { access_token, refresh_token })
         await supabase.auth.setSession({
           access_token,
           refresh_token

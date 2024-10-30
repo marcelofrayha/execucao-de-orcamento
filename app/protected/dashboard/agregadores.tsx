@@ -10,6 +10,15 @@ export const agregadorUnidadeOrcamentaria: { [key: string]: string } = {
     '020902': 'ASS',
     '020904': 'ASS',
     '020903': 'HAB',
+    '21001': 'EDU',
+    '21002': 'EDU',
+    '21003': 'EDU',
+    '21004': 'EDU',
+    '21006': 'EDU',
+    '20901': 'ASS',
+    '20902': 'ASS',
+    '20904': 'ASS',
+    '20903': 'HAB',
     '0211': 'URB',
     '0212': 'AMB',
     '0201': 'ADM',
@@ -19,9 +28,12 @@ export const agregadorUnidadeOrcamentaria: { [key: string]: string } = {
     '0205': 'ADM',
     '0206': 'ADM',
     '0207': 'ADM',
+    '207': 'ADM',
+
     '0213': 'ADM',
     '0214': 'ADM',
     '021005': 'CULT-ESP',
+    '21005': 'CULT-ESP',
     
     // 2023 codes
     '601': 'SAÚ',
@@ -46,6 +58,9 @@ export const agregadorUnidadeOrcamentaria: { [key: string]: string } = {
     '213': 'ADM',
     '209': 'CULT-ESP',
     '210': 'CULT-ESP',
+    '208': 'SAÚ',
+    '206': 'ADM',
+    
     
     // 2024 codes
     '0601': 'SAÚ',

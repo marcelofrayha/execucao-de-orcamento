@@ -4,6 +4,9 @@ import { createClient } from '@supabase/supabase-js'
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { agregadorUnidadeOrcamentaria, agregadorFonteRecurso, agregadorElementoDespesa } from './agregadores'
+import { calcularProjecaoEmpenho, processarDadosHistoricos, DadoHistoricoAgregado } from '@/utils/projecao';
+import { TabelaProjecao } from './tabela-projecao';
+import { parse } from 'path'
 
 interface ValoresAgregados {
     total_orcado: number
@@ -69,15 +72,42 @@ function DashboardContent() {
   const [receitasPorFonte, setReceitasPorFonte] = useState<ReceitaPorFonte[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedMonth, setSelectedMonth] = useState<number>(0)
-  
+  const [selectedMonth, setSelectedMonth] = useState<number>(12)
+  const [dadosHistoricos, setDadosHistoricos] = useState<DadoHistoricoAgregado[]>([])
+
   const searchParams = useSearchParams()
   const router = useRouter()
   const user_id = searchParams.get('user_id')
 
+  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = parseInt(e.target.value, 10)
+    setSelectedMonth(isNaN(value) ? 0 : value)
+  }
+
   useEffect(() => {
     async function fetchData() {
+      console.log('Starting fetchData...')
+      console.log('User ID:', user_id)
+      console.log('Selected Month:', selectedMonth)
+
+      // Ensure selectedMonth is a valid integer
+      const parsedSelectedMonth = Number(selectedMonth)
+      if (isNaN(parsedSelectedMonth)) {
+        console.error('Selected Month is not a valid number.')
+        setError('Invalid month selected.')
+        setLoading(false)
+        return
+      }
+
+      // Define the month filter based on selectedMonth
+      const monthFilter = Array.from(
+        { length: parsedSelectedMonth }, 
+        (_, i) => i + 1
+      )
+      console.log('Month Filter:', monthFilter)
+
       if (!user_id) {
+        console.log('No user ID provided')
         setError('No user ID provided')
         setLoading(false)
         return
@@ -89,54 +119,80 @@ function DashboardContent() {
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         )
 
-        const queries = [
+        // First fetch all available years
+        const { data: rawYearsData, error: yearsError } = await supabase
+          .from('Despesas')
+          .select('ano')
+          .eq('user_id', user_id)
+
+        if (yearsError) throw new Error(`Error fetching years: ${yearsError.message}`)
+        
+        const availableYears = Array.from(new Set(rawYearsData?.map(item => item.ano)))
+
+        // Then use these years in the main query
+        const [despesasResponse, despesas12Response, receitasResponse, allYearDespesasResponse] = await Promise.all([
           supabase
             .from('Despesas')
             .select('*')
-            .eq('user_id', user_id),
+            .eq('user_id', user_id)
+            .eq('mes', selectedMonth),
+          supabase
+            .from('Despesas')
+            .select('*')
+            .eq('user_id', user_id)
+            .eq('mes', 12),
           supabase
             .from('Receitas')
             .select('*')
             .eq('user_id', user_id)
+            .eq('mes', selectedMonth),
+          supabase
+            .from('Despesas')
+            .select('*')
+            .eq('user_id', user_id)
+            .in('ano', availableYears)
+            .in('mes', monthFilter)
+        ])
+        const processedDespesas = despesasResponse.data;
+        
+        // Use processedDespesas instead of despesasResponse.data in the rest of the code
+        const combinedDespesas = [
+          ...(processedDespesas || []),
+          ...(despesas12Response.data || [])
         ]
+        console.log('combinedDespesas', combinedDespesas)
 
-        if (selectedMonth > 0) {
-          queries[0] = queries[0].eq('mes', selectedMonth)
-          queries[1] = queries[1].eq('mes', selectedMonth)
-        }
+        console.log('Despesas fetched meses:', combinedDespesas.map(d => d.mes))
+        console.log('Despesas 12 fetched meses:', despesas12Response.data?.map(d => d.mes))
+        console.log('Receitas fetched meses:', receitasResponse.data?.map(d => d.mes))
 
-        const [despesasResponse, receitasResponse] = await Promise.all(queries)
+        if (despesasResponse.error) throw new Error(`Error fetching despesas: ${despesasResponse.error.message}`)
+        if (receitasResponse.error) throw new Error(`Error fetching receitas: ${receitasResponse.error.message}`)
 
-        if (despesasResponse.error) {
-          throw new Error(`Error fetching despesas: ${despesasResponse.error.message}`)
-        }
+        // Process dashboard data
+        // Agregar despesas por Unidade Orçamentária
+        const unidadeMap = new Map<string, ValoresAgregados>();
+        processedDespesas?.forEach((d) => {
+          const mappedUnidade = agregadorUnidadeOrcamentaria[String(d.unidade_orcamentaria)] || d.unidade_orcamentaria;
+          const existing = unidadeMap.get(mappedUnidade) || { 
+            total_orcado: 0, 
+            total_saldo: 0, 
+            total_empenhado: 0 
+          };
+          
+          const empenhado = (d.empenhado || 0);
 
-        if (receitasResponse.error) {
-          throw new Error(`Error fetching receitas: ${receitasResponse.error.message}`)
-        }
+          unidadeMap.set(mappedUnidade, {
+            total_orcado: existing.total_orcado + d.orcado,
+            total_saldo: existing.total_saldo + d.saldo,
+            total_empenhado: existing.total_empenhado + empenhado
+          });
+          console.log('empenhado', empenhado)
+        });
 
-         // Agregar despesas por Unidade Orçamentária
-         const unidadeMap = new Map<string, ValoresAgregados>()
-            despesasResponse.data.forEach((d) => {
-            // Get the mapped unit or use the original if no mapping exists
-            const mappedUnidade = agregadorUnidadeOrcamentaria[String(d.unidade_orcamentaria)] || d.unidade_orcamentaria
-            
-            const existing = unidadeMap.get(mappedUnidade) || { 
-                total_orcado: 0, 
-                total_saldo: 0, 
-                total_empenhado: 0 
-            }
-            
-            unidadeMap.set(mappedUnidade, {
-                total_orcado: existing.total_orcado + d.orcado,
-                total_saldo: existing.total_saldo + d.saldo,
-                total_empenhado: existing.total_empenhado + d.empenhado
-            })
-        })
- 
          // Agregar despesas por Fonte de Recurso
          const fonteMap = new Map<string, ValoresAgregados>()
-         despesasResponse.data.forEach((d) => {
+         processedDespesas?.forEach((d) => {
           // Get the mapped fonte or use the original if no mapping exists
           const mappedFonte = agregadorFonteRecurso[String(d.fonte_de_recurso)] || d.fonte_de_recurso
           
@@ -155,7 +211,7 @@ function DashboardContent() {
  
          // Agregar despesas por Elemento
          const elementoMap = new Map<string, ValoresAgregados>()
-            despesasResponse.data.forEach((d) => {
+         processedDespesas?.forEach((d) => {
             // Get the mapped elemento or use the original if no mapping exists
             const mappedElemento = agregadorElementoDespesa[String(d.elemento_despesa)] || d.elemento_despesa
             
@@ -170,13 +226,13 @@ function DashboardContent() {
                 total_saldo: existing.total_saldo + d.saldo,
                 total_empenhado: existing.total_empenhado + d.empenhado
             })
-            })
+          })
 
             // Transform the Map into an array for rendering
             const despesasPorElemento = Array.from(elementoMap.entries()).map(([elemento_despesa, valores]) => ({
             elemento_despesa,
             valores
-        }))
+          }))
  
          // Agregar receitas por Descrição
          const descricaoMap = new Map<string, { total_orcado: number, total_saldo: number, total_receita: number }>()
@@ -243,6 +299,12 @@ function DashboardContent() {
              }))
              .sort((a, b) => b.total_orcado - a.total_orcado)
          )
+
+        // Process historical data
+        const dadosAgregados = processarDadosHistoricos(combinedDespesas);
+        console.log('Dados Historicos:', combinedDespesas)
+        setDadosHistoricos(dadosAgregados);
+
       } catch (err) {
         console.error('Error fetching data:', err)
         setError(err instanceof Error ? err.message : 'An error occurred')
@@ -253,6 +315,17 @@ function DashboardContent() {
 
     fetchData()
   }, [user_id, selectedMonth])
+
+  // Preparar dados para a tabela de projeção
+  const dadosProjecao = despesasPorElemento.map(item => ({
+    ...item,
+    analise: calcularProjecaoEmpenho(
+      dadosHistoricos,
+      selectedMonth,
+      item.valores.total_empenhado,
+      item.valores.total_saldo
+    )
+  }))
 
   if (error) {
     return (
@@ -296,10 +369,19 @@ function DashboardContent() {
     <div className="p-4">
       <h1 className="text-2xl text-center font-bold mb-6">Dashboard</h1>
       
+      <div className="flex justify-end mb-4">
+        <button 
+          onClick={() => router.push('/protected')}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Inserir mais dados
+        </button>
+      </div>
+
       <div className="mb-6">
         <select
           value={selectedMonth}
-          onChange={(e) => setSelectedMonth(Number(e.target.value))}
+          onChange={handleMonthChange}
           className="block mx-auto w-64 p-2 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
         >
           {months.map((month) => (
@@ -430,8 +512,6 @@ function DashboardContent() {
         </div>
       </div>
 
-
-
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4 text-center">Receitas por Fonte de Recurso</h2>
         <div className="overflow-x-auto">
@@ -485,6 +565,7 @@ function DashboardContent() {
             </div>
         </div>
       </div>
+      <TabelaProjecao dados={dadosProjecao} selectedMonth={selectedMonth} />
     </div>
   )
 }
