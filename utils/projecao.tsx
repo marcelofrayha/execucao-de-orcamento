@@ -44,7 +44,7 @@ export interface DadoHistoricoAgregado {
       const anos = Array.from(new Set(dadosCategoria.map((d) => d.ano)));
       anos.forEach((ano, index) => {
         const peso = PESOS_ANOS[index] || 0;
-        const dadosAno = dadosCategoria.filter((d) => d.ano === ano);
+        const dadosAno = dadosCategoria.filter((d) => Number(d.ano) === ano);
         // Pegar empenho do mês atual
         const empenhoMes = dadosAno
           .find(d => d.mes === mesAtual)?.empenhado_mes || 0;
