@@ -108,7 +108,11 @@ function processDespesasTable(data: any[][], month: number, year: number, minCol
         saldo: headerRow.findIndex((cell: string) => 
             typeof cell === 'string' && cell.includes('Saldo')),
         empenhadoAte: headerRow.findIndex((cell: string) => 
-            typeof cell === 'string' && cell.includes('Empenhado Até'))
+            typeof cell === 'string' && cell.includes('Empenhado Até')),
+        anulado: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Anulado No')),
+        saldoEmpenhar: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Saldo Empenhar'))
     };
     // Validate that all required columns were found
     const missingColumns = Object.entries(columnIndices)
@@ -116,7 +120,10 @@ function processDespesasTable(data: any[][], month: number, year: number, minCol
         .map(([name]) => name);
 
     if (missingColumns.length > 0) {
-        throw new Error(`Colunas não encontradas: ${missingColumns.join(', ')}`);
+        if (missingColumns.includes('empenhadoAte')) {
+        } else {
+            throw new Error(`Colunas não encontradas: ${missingColumns.join(', ')}`);
+        }
     }
 
     // Select only the desired columns using the found indices
@@ -130,7 +137,23 @@ function processDespesasTable(data: any[][], month: number, year: number, minCol
     ];
   // Remove the first row
   data.shift();
-    data = data.map(row => desiredColumns.map(col => row[col]));
+    data = data.map(row => {
+        if (columnIndices.empenhadoAte === -1) {
+            const calculatedEmpenhadoAte = row[columnIndices.saldo] + 
+                (row[columnIndices.anulado] || 0) - 
+                (row[columnIndices.saldoEmpenhar] || 0);
+            return [
+                row[columnIndices.unidadeOrcamentaria],
+                row[columnIndices.fonteRecurso],
+                row[columnIndices.elementoDespesa],
+                row[columnIndices.orcado],
+                row[columnIndices.saldo],
+                calculatedEmpenhadoAte
+            ];
+        }
+        // console.log(desiredColumns.map(col => row[col]));
+        return desiredColumns.map(col => row[col]);
+    });
 
     // Rename the columns
     const headers = [
