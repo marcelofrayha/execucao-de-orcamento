@@ -1,6 +1,5 @@
 'use client'
 
-import { TutorialStep } from "./tutorial-step";
 import { CodeBlock } from "./code-block";
 import * as XLSX from 'xlsx';
 import { createClient } from '@supabase/supabase-js'
@@ -8,6 +7,8 @@ import { processExcel } from '@/app/data-formater';
 import { processTable } from "@/app/table-formater";
 import { useState } from 'react';
 import { redirect } from 'next/navigation';
+import { FuturisticCard } from "@/components/tutorial/card";
+import { Button } from "../ui/button";
 
 const create = `create table notes (
   id bigserial primary key,
@@ -57,11 +58,16 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
   const [tableType, setTableType] = useState<'Despesas' | 'Receitas'>('Despesas');
 
   return (
-    <ol className="flex flex-col gap-6">
-      <TutorialStep title="Dados sobre a despesa ou receita">
-        <form onSubmit={(e) => handleSubmit(e, user_id, setPreviewData, tableType)} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+    <div className="flex flex-col gap-6">
+      <FuturisticCard title="Dados sobre a despesa ou receita">
+        <form onSubmit={(e) => handleSubmit(e, user_id, setPreviewData, tableType)} className="space-y-6">
           <div className="flex flex-col">
-            <label htmlFor="tableType" className="mb-2 text-sm font-medium text-gray-800">Tipo de Tabela:</label>
+            <label 
+              htmlFor="tableType" 
+              className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200"
+            >
+              Tipo de Tabela:
+            </label>
             <select 
               id="tableType" 
               name="tableType" 
@@ -74,7 +80,12 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             </select>
           </div>
           <div className="flex flex-col">
-            <label htmlFor="month" className="mb-2 text-sm font-medium text-gray-800">Mês:</label>
+            <label 
+              htmlFor="month" 
+              className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200"
+            >
+              Mês:
+            </label>
             <input 
               type="number" 
               id="month" 
@@ -86,7 +97,12 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="year" className="mb-2 text-sm font-medium text-gray-800">Ano:</label>
+            <label  
+              htmlFor="year" 
+              className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200"
+            >
+              Ano:
+            </label>
             <input 
               type="number" 
               id="year" 
@@ -98,7 +114,8 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="startCol" className="mb-2 text-sm font-medium text-gray-800">Coluna Inicial:</label>
+            <label 
+              className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200">Coluna Inicial:</label>
             <input 
               type="text" 
               id="startCol" 
@@ -108,7 +125,12 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="endCol" className="mb-2 text-sm font-medium text-gray-800">Coluna Final:</label>
+            <label 
+              htmlFor="endCol" 
+              className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200"
+            >
+              Coluna Final:
+            </label>
             <input 
               type="text" 
               id="endCol" 
@@ -118,7 +140,12 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="file" className="mb-2 text-sm font-medium text-gray-800">Upload Arquivo (XLSX ou CSV):</label>
+            <label 
+              htmlFor="file" 
+              className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200"
+            >
+              Upload Arquivo (XLSX):
+            </label>
             <input 
               type="file" 
               id="file" 
@@ -128,12 +155,12 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
               className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <button 
+          <Button 
             type="submit" 
-            className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="w-full"
           >
             Pré Visualizar
-          </button>
+          </Button>
         </form>
         {previewData && (
           <div className="mt-6">
@@ -186,9 +213,9 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
             </button>
           </div>
         )}
-      </TutorialStep>
+      </FuturisticCard>
 
-      {/* <TutorialStep title="Query Supabase data from Next.js">
+      {/* <FuturisticCard title="Query Supabase data from Next.js">
         <p>
           To create a Supabase client and query data from an Async Server
           Component, create a new page.tsx file at{" "}
@@ -200,12 +227,12 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
         <CodeBlock code={server} />
         <p>Alternatively, you can use a Client Component.</p>
         <CodeBlock code={client} />
-      </TutorialStep>
+      </FuturisticCard>
 
-      <TutorialStep title="Build in a weekend and scale to millions!">
+      <FuturisticCard title="Build in a weekend and scale to millions!">
         <p>You're ready to launch your product to the world! 🚀</p>
-      </TutorialStep> */}
-    </ol>
+      </FuturisticCard> */}
+    </div>
   );
 }
 

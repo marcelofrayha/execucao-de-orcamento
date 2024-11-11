@@ -2,6 +2,8 @@ import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
 import { createClient } from "@/utils/supabase/server";
 import { InfoIcon } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from 'next/link';
+import { Button } from "@/components/ui/button";
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -16,21 +18,23 @@ export default async function ProtectedPage() {
 
   return (
     <div className="flex-1 w-full flex flex-col gap-12">
-      <div className="w-full">
-        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-          <InfoIcon size="16" strokeWidth={2} />
-          Página exclusiva do município
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 items-start">
-        <h2 className="font-bold text-2xl mb-4">Dados do usuário</h2>
-        <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          {JSON.stringify(user, null, 2)}
-        </pre>
-      </div>
+      <Link
+        href={`/protected/dashboard?user_id=${user.id}`}
+        className="flex justify-center"
+      >
+        <Button
+          size="lg"
+          variant={"default"}
+          className="opacity-100 dark:opacity-100 cursor-none pointer-events-none items-center"
+        >
+          Ir para Dashboard
+        </Button>
+      </Link>
+      
       <div>
-        <h2 className="font-bold text-2xl mb-4">Insira os dados do orçamento</h2>
+        <h2 className="font-bold text-2xl mb-4 text-center">Insira os dados do orçamento</h2>
         <FetchDataSteps user_id={user.id} />
+
       </div>
     </div>
   );

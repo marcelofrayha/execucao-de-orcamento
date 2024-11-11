@@ -6,7 +6,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { agregadorUnidadeOrcamentaria, agregadorFonteRecurso, agregadorElementoDespesa } from './agregadores'
 import { calcularProjecaoEmpenho, processarDadosHistoricos, DadoHistoricoAgregado } from '@/utils/projecao';
 import { TabelaProjecao } from './tabela-projecao';
-import { parse } from 'path'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 interface ValoresAgregados {
     total_orcado: number
@@ -49,7 +50,6 @@ interface MonthOption {
 }
 
 const months: MonthOption[] = [
-  { value: 0, label: 'Todos os Meses' },
   { value: 1, label: 'Janeiro' },
   { value: 2, label: 'Fevereiro' },
   { value: 3, label: 'Março' },
@@ -369,15 +369,23 @@ function DashboardContent() {
     <div className="p-4">
       <h1 className="text-2xl text-center font-bold mb-6">Dashboard</h1>
       
-      <div className="flex justify-end mb-4">
-        <button 
-          onClick={() => router.push('/protected')}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+      <div className="flex justify-center mb-4">
+      <Link
+        href={`/protected`}
+          className="flex justify-center"
+        >
+          <Button
+          size="lg"
+          variant={"default"}
+          className="opacity-100 cursor-none pointer-events-none items-center"
         >
           Inserir mais dados
-        </button>
+        </Button>
+        </Link>
       </div>
-
+      <div className="flex justify-center mb-4">
+        <h2 className="text-xl font-semibold text-center mb-4">Selecione o mês</h2>
+      </div>
       <div className="mb-6">
         <select
           value={selectedMonth}
