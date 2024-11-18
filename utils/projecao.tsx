@@ -32,21 +32,27 @@ export interface DadoHistoricoAgregado {
     saldoAtual: number,
     selectedYear: number
   ): ResultadoProjecao {
+    console.log('=== Starting Projection Calculation ===');
+    console.log('Current Month:', mesAtual);
+    console.log('Current Spending:', empenhoAtual);
+    console.log('Current Balance:', saldoAtual);
 
     const categorias = Array.from(new Set(dadosHistoricos.map((d) => d.categoria_economica)));
+    console.log('Categories:', categorias);
     
     let somaPesos = 0;
     let somaProporcoesComPeso = 0;
 
     categorias.forEach((categoria) => {
+      console.log('\n=== Processing Category:', categoria, '===');
       const dadosCategoria = dadosHistoricos.filter(
         (d) => d.categoria_economica === categoria
       );
       
-      // Get available years before the selected year
       const anosDisponiveis = Array.from(new Set(dadosCategoria.map(d => d.ano)))
-        .filter(ano => ano <= selectedYear)
+        .filter(ano => ano < selectedYear)
         .sort((a, b) => b - a);
+      console.log('Available Years:', anosDisponiveis);
 
       anosDisponiveis.forEach((ano, index) => {
         const peso = PESOS_ANOS[index] || 0;
@@ -55,8 +61,14 @@ export interface DadoHistoricoAgregado {
         const empenhoMes = dadosAno.find(d => d.mes === mesAtual)?.empenhado_mes || 0;
         const empenhoDezembro = dadosAno.find(d => d.mes === 12)?.empenhado_mes || 0;
 
+        console.log(`Year ${ano}:`);
+        console.log(`- Weight: ${peso}`);
+        console.log(`- Spending Month ${mesAtual}: ${empenhoMes}`);
+        console.log(`- Spending December: ${empenhoDezembro}`);
+
         if (empenhoMes > 0 && empenhoDezembro > 0) {
           const proporcao = empenhoMes / empenhoDezembro;
+          console.log(`- Proportion: ${proporcao.toFixed(4)} (${(proporcao * 100).toFixed(2)}%)`);
           somaProporcoesComPeso += proporcao * peso;
           somaPesos += peso;
         }
@@ -64,14 +76,19 @@ export interface DadoHistoricoAgregado {
     });
 
     const proporcaoMediaHistorica = somaPesos > 0 ? somaProporcoesComPeso / somaPesos : 0;
+    console.log('\n=== Final Calculations ===');
+    console.log('Total Weights:', somaPesos);
+    console.log('Weighted Sum of Proportions:', somaProporcoesComPeso);
+    console.log('Historical Average Proportion:', proporcaoMediaHistorica.toFixed(4), 
+                `(${(proporcaoMediaHistorica * 100).toFixed(2)}%)`);
 
     const projecaoFinalAno = proporcaoMediaHistorica > 0
       ? (empenhoAtual / proporcaoMediaHistorica)
       : 0;
+    console.log('Projected Annual Total:', projecaoFinalAno);
     const percentualExecutado = projecaoFinalAno > 0 
       ? (projecaoFinalAno / saldoAtual) * 100
       : null;
-
 
     let statusExecucao: 'adequado' | 'abaixo' | 'acima';
     const percentual = percentualExecutado ?? 0;

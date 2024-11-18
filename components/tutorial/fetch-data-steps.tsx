@@ -467,11 +467,13 @@ async function checkExistingData(user_id: string, month: number, year: number, t
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  const monthStr = month.toString().replace(/^0+/, ''); // Remove leading zeros
+
   const { data, error } = await supabase
     .from(tableType)
     .select('id')
     .eq('user_id', user_id)
-    .eq('mes', month)
+    .eq('mes', monthStr)  // Using the cleaned month string
     .eq('ano', year)
     .limit(1);
 

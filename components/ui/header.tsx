@@ -1,14 +1,14 @@
 import { FuturisticCard } from "@/components/ui/card"
 
 interface DashboardHeaderProps {
-  totalOrcado: number
+  totalSaldo: number
   totalEmpenhado: number
   percentualExecutado: number
   mes: string
   ano: number
 }
 
-export function DashboardHeader({ totalOrcado, totalEmpenhado, percentualExecutado, mes, ano }: DashboardHeaderProps) {
+export function DashboardHeader({ totalSaldo, totalEmpenhado, percentualExecutado, mes, ano }: DashboardHeaderProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -22,7 +22,7 @@ export function DashboardHeader({ totalOrcado, totalEmpenhado, percentualExecuta
         <FuturisticCard title="Orçamento Total">
           <p className="text-sm font-medium text-muted-foreground">Orçamento Total</p>
           <p className="text-2xl font-bold">
-            {totalOrcado.toLocaleString('pt-BR', { 
+            {totalSaldo.toLocaleString('pt-BR', { 
               style: 'currency', 
               currency: 'BRL',
               minimumFractionDigits: 0

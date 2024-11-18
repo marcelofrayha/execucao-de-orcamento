@@ -120,16 +120,16 @@ function DashboardContent() {
 
   // Calculate totals for the header
   const totals = useMemo(() => {
-    const totalOrcado = despesasPorElemento.reduce((sum, item) => 
-      sum + item.valores.total_orcado, 0
+    const totalSaldo = despesasPorElemento.reduce((sum, item) => 
+      sum + item.valores.total_saldo, 0
     );
     const totalEmpenhado = despesasPorElemento.reduce((sum, item) => 
       sum + item.valores.total_empenhado, 0
     );
-    const percentualExecutado = totalOrcado ? (totalEmpenhado / totalOrcado) * 100 : 0;
+    const percentualExecutado = totalSaldo ? (totalEmpenhado / totalSaldo) * 100 : 0;
 
     return {
-      totalOrcado,
+      totalSaldo,
       totalEmpenhado,
       percentualExecutado
     };
@@ -447,7 +447,7 @@ function DashboardContent() {
 
       {/* Header with statistics */}
       <DashboardHeader 
-        totalOrcado={totals.totalOrcado}
+        totalSaldo={totals.totalSaldo}
         totalEmpenhado={totals.totalEmpenhado}
         percentualExecutado={totals.percentualExecutado}
         mes={months.find(m => m.value === selectedMonth)?.label || ''}
