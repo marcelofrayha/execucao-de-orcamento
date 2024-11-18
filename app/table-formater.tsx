@@ -109,6 +109,8 @@ function processDespesasTable(data: any[][], month: number, year: number, minCol
             typeof cell === 'string' && cell.includes('Saldo')),
         empenhadoAte: headerRow.findIndex((cell: string) => 
             typeof cell === 'string' && cell.includes('Empenhado Até')),
+        empenhadoNo: headerRow.findIndex((cell: string) => 
+            typeof cell === 'string' && cell.includes('Empenhado No')),
         anulado: headerRow.findIndex((cell: string) => 
             typeof cell === 'string' && cell.includes('Anulado No')),
         saldoEmpenhar: headerRow.findIndex((cell: string) => 
@@ -139,9 +141,15 @@ function processDespesasTable(data: any[][], month: number, year: number, minCol
   data.shift();
     data = data.map(row => {
         if (columnIndices.empenhadoAte === -1) {
-            const calculatedEmpenhadoAte = row[columnIndices.saldo] + 
-                (row[columnIndices.anulado] || 0) - 
+            let calculatedEmpenhadoAte = 0;
+            if (month === 1) {
+                calculatedEmpenhadoAte = (row[columnIndices.empenhadoNo] || 0) 
+            }
+            else {
+                calculatedEmpenhadoAte = (row[columnIndices.saldo] || 0) + 
+                    (row[columnIndices.anulado] || 0) - 
                 (row[columnIndices.saldoEmpenhar] || 0);
+            }
             return [
                 row[columnIndices.unidadeOrcamentaria],
                 row[columnIndices.fonteRecurso],
@@ -204,18 +212,27 @@ function processReceitasTable(data: any[][], month: number, year: number, minCol
     };
 
     // Filter and rearrange the data
-    const processedData = data.slice(1).map(row => [
-        month,
-        year,
-        row[columnIndices.descricao],
-        row[columnIndices.fonteRecurso],
-        convertToNumber(row[columnIndices.orcado]),
-        convertToNumber(row[columnIndices.saldo]),
-        convertToNumber(row[columnIndices.atePeriodo])
-    ]);
+    const processedData = data.slice(1)
+        .filter(row => row[columnIndices.descricao])
+        .map(row => [
+            row[columnIndices.descricao],
+            row[columnIndices.fonteRecurso],
+            convertToNumber(row[columnIndices.orcado]),
+            convertToNumber(row[columnIndices.saldo]),
+            convertToNumber(row[columnIndices.atePeriodo])
+        ]);
 
-    // Add headers
-    processedData.unshift(['mes', 'ano', 'descricao', 'fonte_de_recurso', 'orcado', 'saldo', 'receita']);
+    // Add headers first
+    processedData.unshift(['descricao', 'fonte_de_recurso', 'orcado', 'saldo', 'receita']);
+
+    // Then add month and year columns to all rows
+    processedData.forEach((row, index) => {
+        if (index === 0) {
+            row.unshift('mes', 'ano');
+        } else {
+            row.unshift(month, year);
+        }
+    });
 
     // Create a new workbook and add the processed data
     const newWorkbook = XLSX.utils.book_new();

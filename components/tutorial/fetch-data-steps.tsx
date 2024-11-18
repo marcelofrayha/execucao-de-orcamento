@@ -120,6 +120,7 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
               type="text" 
               id="startCol" 
               name="startCol" 
+              defaultValue="2"
               required 
               className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -135,6 +136,7 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
               type="text" 
               id="endCol" 
               name="endCol" 
+              defaultValue="8"
               required 
               className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -171,24 +173,24 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
                   <tr>
                     {tableType === 'Despesas' ? (
                       <>
-                        <th className="px-4 py-2 border-b">Mês</th>
-                        <th className="px-4 py-2 border-b">Ano</th>
-                        <th className="px-4 py-2 border-b">Unidade Orçamentária</th>
-                        <th className="px-4 py-2 border-b">Fonte de Recurso</th>
-                        <th className="px-4 py-2 border-b">Elemento Despesa</th>
-                        <th className="px-4 py-2 border-b">Orçado</th>
-                        <th className="px-4 py-2 border-b">Saldo</th>
-                        <th className="px-4 py-2 border-b">Empenhado</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Mês</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Ano</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Unidade Orçamentária</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Fonte de Recurso</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Elemento Despesa</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Orçado</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Saldo</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Empenhado</th>
                       </>
                     ) : (
                       <>
-                      <th className="px-4 py-2 border-b">Mês</th>
-                      <th className="px-4 py-2 border-b">Ano</th>
-                        <th className="px-4 py-2 border-b">Descrição</th>
-                        <th className="px-4 py-2 border-b">Fonte de Recurso</th>
-                        <th className="px-4 py-2 border-b">Orçado</th>
-                        <th className="px-4 py-2 border-b">Saldo</th>
-                        <th className="px-4 py-2 border-b">Receita</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Mês</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Ano</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Descrição</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Fonte de Recurso</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Orçado</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Saldo</th>
+                        <th className="px-4 py-2 border-b text-center dark:text-black">Receita</th>
                       </>
                     )}
                   </tr>
@@ -197,7 +199,7 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
                   {previewData.slice(0, 5).map((row, index) => (
                     <tr key={index}>
                       {row.map((cell: any, cellIndex: number) => (
-                        <td key={cellIndex} className="px-4 py-2 border-b">{cell}</td>
+                        <td key={cellIndex} className="px-4 py-2 border-b text-center dark:text-black">{cell}</td>
                       ))}
                     </tr>
                   ))}
@@ -236,36 +238,77 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
   );
 }
 
-function handleSubmit(event: React.FormEvent<HTMLFormElement>, user_id: string, setPreviewData: (data: any[] | null) => void, tableType: 'Despesas' | 'Receitas') {
+async function handleSubmit(
+  event: React.FormEvent<HTMLFormElement>, 
+  user_id: string, 
+  setPreviewData: (data: any[] | null) => void, 
+  tableType: 'Despesas' | 'Receitas'
+) {
   event.preventDefault();
   const formData = new FormData(event.currentTarget);
   const startCol = formData.get('startCol');
   const endCol = formData.get('endCol');
   const file = formData.get('file') as File;
+  const month = Number(formData.get('month'));
+  const year = Number(formData.get('year'));
 
   if (!file) {
     console.error('No file uploaded');
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const data = new Uint8Array(e.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const ano = formData.get('year');
-      const mes = formData.get('month');
-      const processedWorkbook = processTable(workbook, Number(mes), Number(ano), Number(startCol), Number(endCol), tableType)
-      const processedData = processExcel(processedWorkbook, Number(startCol), Number(endCol));
-      const dataToUpload = processedData.slice(1);
-      setPreviewData(dataToUpload);
-    } catch (error) {
-      console.error('Error processing data:', error);
-      setPreviewData(null);
+  try {
+    // Check for existing data
+    const hasExistingData = await checkExistingData(user_id, month, year, tableType);
+    
+    if (hasExistingData) {
+      const confirmOverwrite = window.confirm(
+        `Já existem dados para ${tableType} no mês ${month}/${year}. Deseja sobrescrever?`
+      );
+      
+      if (!confirmOverwrite) {
+        return;
+      } else {
+        // Delete existing data
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { error: deleteError } = await supabase
+          .from(tableType)
+          .delete()
+          .eq('user_id', user_id)
+          .eq('mes', month)
+          .eq('ano', year);
+  
+        if (deleteError) {
+          throw new Error(`Error deleting existing data: ${deleteError.message}`);
+        } else {
+          alert('Dados existentes deletados com sucesso.');
+        }
+      }
     }
-  };
 
-  reader.readAsArrayBuffer(file);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const processedWorkbook = processTable(workbook, month, year, Number(startCol), Number(endCol), tableType)
+        const processedData = processExcel(processedWorkbook, Number(startCol), Number(endCol));
+        const dataToUpload = processedData.slice(1);
+        setPreviewData(dataToUpload);
+      } catch (error) {
+        console.error('Error processing data:', error);
+        setPreviewData(null);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Erro ao verificar dados existentes. Por favor, tente novamente.');
+  }
 }
 
 async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'Despesas' | 'Receitas') {
@@ -281,7 +324,7 @@ async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'De
       persistSession: true,
     },
   });
-  
+
   let formattedData;
   if (tableType === 'Despesas') {
     formattedData = data.map((row: any) => ({
@@ -356,18 +399,18 @@ function sanityCheck(data: any[], tableType: 'Despesas' | 'Receitas'): boolean {
     return false;
   }
 
-  const requiredFields = tableType === 'Despesas' 
-    ? ['mes', 'ano', 'unidade_orcamentaria', 'fonte_de_recurso', 'elemento_despesa', 'orcado', 'saldo', 'empenhado']
-    : ['descricao', 'fonte_de_recurso', 'orcado', 'saldo', 'receita'];
+  // const requiredFields = tableType === 'Despesas' 
+  //   ? ['mes', 'ano', 'unidade_orcamentaria', 'fonte_de_recurso', 'elemento_despesa', 'orcado', 'saldo', 'empenhado']
+  //   : ['descricao', 'fonte_de_recurso', 'orcado', 'saldo', 'receita'];
 
-  const allFieldsPresent = data.every(row => 
-    requiredFields.every((field, index) => row[index] !== undefined && row[index] !== null)
-  );
+  // const allFieldsPresent = data.every(row => 
+  //   requiredFields.every((field, index) => row[index] !== undefined && row[index] !== null)
+  // );
 
-  if (!allFieldsPresent) {
-    console.error('Erro: Alguns campos obrigatórios estão faltando ou são nulos.');
-    return false;
-  }
+  // if (!allFieldsPresent) {
+  //   console.error('Erro: Alguns campos obrigatórios estão faltando ou são nulos.');
+  //   return false;
+  // }
 
   const numericFields = tableType === 'Despesas' 
     ? [5, 6, 7]  // índices de orcado, saldo, empenhado
@@ -416,4 +459,26 @@ function parseCookies(): { [key: string]: string } {
     cookies[name] = value;
     return cookies;
   }, {} as { [key: string]: string });
+}
+
+async function checkExistingData(user_id: string, month: number, year: number, tableType: 'Despesas' | 'Receitas') {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data, error } = await supabase
+    .from(tableType)
+    .select('id')
+    .eq('user_id', user_id)
+    .eq('mes', month)
+    .eq('ano', year)
+    .limit(1);
+
+  if (error) {
+    console.error('Error checking existing data:', error);
+    throw error;
+  }
+
+  return data && data.length > 0;
 }

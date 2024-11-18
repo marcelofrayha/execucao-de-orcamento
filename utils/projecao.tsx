@@ -29,7 +29,8 @@ export interface DadoHistoricoAgregado {
     dadosHistoricos: DadoHistoricoAgregado[],
     mesAtual: number,
     empenhoAtual: number,
-    saldoAtual: number
+    saldoAtual: number,
+    selectedYear: number
   ): ResultadoProjecao {
 
     const categorias = Array.from(new Set(dadosHistoricos.map((d) => d.categoria_economica)));
@@ -41,17 +42,24 @@ export interface DadoHistoricoAgregado {
       const dadosCategoria = dadosHistoricos.filter(
         (d) => d.categoria_economica === categoria
       );
-      const anos = Array.from(new Set(dadosCategoria.map((d) => d.ano)));
-      anos.forEach((ano, index) => {
+      
+      // Get available years before the selected year
+      const anosDisponiveis = Array.from(new Set(dadosCategoria.map(d => d.ano)))
+        .filter(ano => ano <= selectedYear)
+        .sort((a, b) => b - a); // Sort descending
+      
+      // Process each available year
+      anosDisponiveis.forEach((ano, index) => {
         const peso = PESOS_ANOS[index] || 0;
         const dadosAno = dadosCategoria.filter((d) => Number(d.ano) === ano);
-        // Pegar empenho do mês atual
+        
         const empenhoMes = dadosAno
           .find(d => d.mes === mesAtual)?.empenhado_mes || 0;
         // Pegar empenho de dezembro
         const empenhoDezembro = dadosAno
           .find(d => d.mes === 12)?.empenhado_mes || 0;
-        if (empenhoDezembro > 0) {
+
+        if (empenhoMes > 0 && empenhoDezembro > 0) {
           const proporcao = empenhoMes / empenhoDezembro;
           somaProporcoesComPeso += proporcao * peso;
           somaPesos += peso;
@@ -60,16 +68,10 @@ export interface DadoHistoricoAgregado {
     });
 
     const proporcaoMediaHistorica = somaPesos > 0 ? somaProporcoesComPeso / somaPesos : 0;
-    console.log('Proporcao Media Historica:', proporcaoMediaHistorica)
-    const proporcaoAtual = empenhoAtual / saldoAtual;
-    console.log('Proporcao Atual:', proporcaoAtual)
+
     const projecaoFinalAno = proporcaoMediaHistorica > 0
       ? (empenhoAtual / proporcaoMediaHistorica)
       : 0;
-    console.log('Empenhado Atual:', empenhoAtual)
-    console.log('Saldo Atual:', saldoAtual)
-    console.log('Proporcao Esperada:', 100)
-    console.log('Projecao Final Ano:', projecaoFinalAno)
     const percentualExecutado = projecaoFinalAno > 0 
       ? (projecaoFinalAno / saldoAtual) * 100
       : null;
@@ -93,17 +95,22 @@ export interface DadoHistoricoAgregado {
   }
   
   // Função para processar dados históricos
-  export function processarDadosHistoricos(dados: any[]): DadoHistoricoAgregado[] {
+  export function processarDadosHistoricos(
+    dados: any[],
+    selectedYear: number
+  ): DadoHistoricoAgregado[] {
     const historicoProcessado: DadoHistoricoAgregado[] = [];
-    const anoAtual = new Date().getFullYear();
+    
+    // Get unique years from the data, filtering out years >= selectedYear
+    const anosDisponiveis = Array.from(new Set(dados.map(d => Number(d.ano))))
+      .filter(ano => ano <= selectedYear)
+      .sort((a, b) => b - a); // Sort descending
 
-    for (let i = 0; i <= 4; i++) {
-      const ano = anoAtual - i;
-      console.log('Checking year:', ano);
-      console.log('Sample data year:', dados[0]?.ano, 'type:', typeof dados[0]?.ano);
-      
+    
+    // Process each available year
+    for (const ano of anosDisponiveis) {
+
       const dadosAno = dados.filter((d) => Number(d.ano) === ano);
-      console.log('Filtered data:', dadosAno.length);
 
       if (dadosAno.length > 0) {
         // Mapear todos os dados para suas categorias
@@ -111,7 +118,7 @@ export interface DadoHistoricoAgregado {
           ...d,
           categoria_economica: agregadorElementoDespesa[d.elemento_despesa] || 'Outros'
         }));
-        console.log('Dados Com Categoria:', dadosComCategoria)
+        
         const categorias = Array.from(new Set(dadosComCategoria.map(d => d.categoria_economica)));
 
         for (let categoria of categorias) {
