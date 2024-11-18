@@ -46,18 +46,14 @@ export interface DadoHistoricoAgregado {
       // Get available years before the selected year
       const anosDisponiveis = Array.from(new Set(dadosCategoria.map(d => d.ano)))
         .filter(ano => ano <= selectedYear)
-        .sort((a, b) => b - a); // Sort descending
-      
-      // Process each available year
+        .sort((a, b) => b - a);
+
       anosDisponiveis.forEach((ano, index) => {
         const peso = PESOS_ANOS[index] || 0;
-        const dadosAno = dadosCategoria.filter((d) => Number(d.ano) === ano);
+        const dadosAno = dadosCategoria.filter(d => d.ano === ano);
         
-        const empenhoMes = dadosAno
-          .find(d => d.mes === mesAtual)?.empenhado_mes || 0;
-        // Pegar empenho de dezembro
-        const empenhoDezembro = dadosAno
-          .find(d => d.mes === 12)?.empenhado_mes || 0;
+        const empenhoMes = dadosAno.find(d => d.mes === mesAtual)?.empenhado_mes || 0;
+        const empenhoDezembro = dadosAno.find(d => d.mes === 12)?.empenhado_mes || 0;
 
         if (empenhoMes > 0 && empenhoDezembro > 0) {
           const proporcao = empenhoMes / empenhoDezembro;
@@ -104,14 +100,14 @@ export interface DadoHistoricoAgregado {
     // Get unique years from the data, filtering out years >= selectedYear
     const anosDisponiveis = Array.from(new Set(dados.map(d => Number(d.ano))))
       .filter(ano => ano <= selectedYear)
-      .sort((a, b) => b - a); // Sort descending
+      .sort((a, b) => b - a);
 
-    
+    console.log('Anos disponíveis:', anosDisponiveis);
     // Process each available year
     for (const ano of anosDisponiveis) {
 
       const dadosAno = dados.filter((d) => Number(d.ano) === ano);
-
+      console.log('Dados do ano:', dadosAno);
       if (dadosAno.length > 0) {
         // Mapear todos os dados para suas categorias
         const dadosComCategoria = dadosAno.map((d) => ({
