@@ -7,12 +7,17 @@ export interface DadoHistoricoAgregado {
   empenhado_mes: number;
 }
   
+  
+  // Função principal
   export interface ResultadoProjecao {
     projecaoFinalAno: number;
+    projecaoFinalAnoTotal: number;  // Added for total projection
     percentualExecutado: number;
+    percentualExecutadoTotal: number;  // Added for total projection
     statusExecucao: 'adequado' | 'abaixo' | 'acima';
+    statusExecucaoTotal: 'adequado' | 'abaixo' | 'acima';  // Added for total projection
   }
-  
+
   // Constantes
   const PESOS_ANOS: { [key: number]: number } = {
     0: 0.40, // Ano anterior (maior peso)
@@ -23,8 +28,7 @@ export interface DadoHistoricoAgregado {
   };
   
 
-  
-  // Função principal
+
   export function calcularProjecaoEmpenho(
     dadosHistoricos: DadoHistoricoAgregado[],
     mesAtual: number,
@@ -75,35 +79,78 @@ export interface DadoHistoricoAgregado {
       });
     });
 
+    // New total calculations
+    let somaPesosTotal = 0;
+    let somaProporcoesComPesoTotal = 0;
+
+    const anosDisponiveisTotal = Array.from(new Set(dadosHistoricos.map(d => d.ano)))
+      .filter(ano => ano < selectedYear)
+      .sort((a, b) => b - a);
+
+    console.log('\n=== Processing Total (All Categories) ===');
+    anosDisponiveisTotal.forEach((ano, index) => {
+      const peso = PESOS_ANOS[index] || 0;
+      const dadosAno = dadosHistoricos.filter(d => d.ano === ano);
+      
+      const empenhoMesTotal = dadosAno
+        .filter(d => d.mes === mesAtual)
+        .reduce((sum, d) => sum + d.empenhado_mes, 0);
+          
+      const empenhoDezembroTotal = dadosAno
+        .filter(d => d.mes === 12)
+        .reduce((sum, d) => sum + d.empenhado_mes, 0);
+
+      if (empenhoMesTotal > 0 && empenhoDezembroTotal > 0) {
+        const proporcao = empenhoMesTotal / empenhoDezembroTotal;
+        somaProporcoesComPesoTotal += proporcao * peso;
+        somaPesosTotal += peso;
+      }
+    });
+
+    // Calculate both projections
     const proporcaoMediaHistorica = somaPesos > 0 ? somaProporcoesComPeso / somaPesos : 0;
-    console.log('\n=== Final Calculations ===');
-    console.log('Total Weights:', somaPesos);
-    console.log('Weighted Sum of Proportions:', somaProporcoesComPeso);
-    console.log('Historical Average Proportion:', proporcaoMediaHistorica.toFixed(4), 
-                `(${(proporcaoMediaHistorica * 100).toFixed(2)}%)`);
+    const proporcaoMediaHistoricaTotal = somaPesosTotal > 0 ? somaProporcoesComPesoTotal / somaPesosTotal : 0;
 
     const projecaoFinalAno = proporcaoMediaHistorica > 0
       ? (empenhoAtual / proporcaoMediaHistorica)
       : 0;
-    console.log('Projected Annual Total:', projecaoFinalAno);
+    const projecaoFinalAnoTotal = proporcaoMediaHistoricaTotal > 0
+      ? (empenhoAtual / proporcaoMediaHistoricaTotal)
+      : 0;
+
     const percentualExecutado = projecaoFinalAno > 0 
       ? (projecaoFinalAno / saldoAtual) * 100
-      : null;
+      : 0;
+    const percentualExecutadoTotal = projecaoFinalAnoTotal > 0 
+      ? (projecaoFinalAnoTotal / saldoAtual) * 100
+      : 0;
 
     let statusExecucao: 'adequado' | 'abaixo' | 'acima';
-    const percentual = percentualExecutado ?? 0;
-    if (percentual >= 95 && percentual <= 105) {
+    let statusExecucaoTotal: 'adequado' | 'abaixo' | 'acima';
+
+    if (percentualExecutado >= 95 && percentualExecutado <= 105) {
       statusExecucao = 'adequado';
-    } else if (percentual < 95) {
+    } else if (percentualExecutado < 95) {
       statusExecucao = 'abaixo';
     } else {
       statusExecucao = 'acima';
     }
 
+    if (percentualExecutadoTotal >= 95 && percentualExecutadoTotal <= 105) {
+      statusExecucaoTotal = 'adequado';
+    } else if (percentualExecutadoTotal < 95) {
+      statusExecucaoTotal = 'abaixo';
+    } else {
+      statusExecucaoTotal = 'acima';
+    }
+
     return {
       projecaoFinalAno,
-      percentualExecutado: percentual,
+      projecaoFinalAnoTotal,
+      percentualExecutado,
+      percentualExecutadoTotal,
       statusExecucao,
+      statusExecucaoTotal,
     };
   }
   

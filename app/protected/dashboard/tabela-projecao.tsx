@@ -33,43 +33,45 @@ export function TabelaProjecao({ dados, selectedMonth }: TabelaProjecaoProps) {
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-900">
-            {dados.map((item, index) => (
-              <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-                <td className="px-4 py-2 text-center">{item.elemento_despesa}</td>
-                <td className="px-4 py-2 text-center">
-                  {item.valores.total_empenhado.toLocaleString('pt-BR', { 
-                    style: 'currency', 
-                    currency: 'BRL',
-                    minimumFractionDigits: 0
-                  })}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  {item.valores.total_saldo.toLocaleString('pt-BR', { 
-                    style: 'currency', 
-                    currency: 'BRL',
-                    minimumFractionDigits: 0
-                  })}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  {item.analise.projecaoFinalAno.toLocaleString('pt-BR', { 
-                    style: 'currency', 
-                    currency: 'BRL',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                  })}
-                </td>
-                <td className={`px-4 py-2 text-center ${
-                  item.analise.statusExecucao === 'adequado' ? 'text-green-600' :
-                  item.analise.statusExecucao === 'acima' ? 'text-red-600' :
-                  'text-yellow-600'
-                }`}>
-                  {item.analise.statusExecucao.toUpperCase()}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  {item.analise.percentualExecutado.toFixed(1)}%
-                </td>
-              </tr>
-            ))}
+            {dados
+              .filter(item => item.analise.projecaoFinalAno !== 0)
+              .map((item, index) => (
+                <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="px-4 py-2 text-center">{item.elemento_despesa}</td>
+                  <td className="px-4 py-2 text-center">
+                    {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                      style: 'currency', 
+                      currency: 'BRL',
+                      minimumFractionDigits: 0
+                    })}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                      style: 'currency', 
+                      currency: 'BRL',
+                      minimumFractionDigits: 0
+                    })}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    {item.analise.projecaoFinalAno.toLocaleString('pt-BR', { 
+                      style: 'currency', 
+                      currency: 'BRL',
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0
+                    })}
+                  </td>
+                  <td className={`px-4 py-2 text-center ${
+                    item.analise.statusExecucao === 'adequado' ? 'text-green-600' :
+                    item.analise.statusExecucao === 'acima' ? 'text-red-600' :
+                    'text-yellow-600'
+                  }`}>
+                    {item.analise.statusExecucao.toUpperCase()}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    {item.analise.percentualExecutado.toFixed(1)}%
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

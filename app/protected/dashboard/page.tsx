@@ -118,6 +118,18 @@ function DashboardContent() {
   const router = useRouter()
   const user_id = searchParams.get('user_id')
 
+  // Move dadosProjecao calculation before totals
+  const dadosProjecao = despesasPorElemento.map(item => ({
+    ...item,
+    analise: calcularProjecaoEmpenho(
+      dadosHistoricos,
+      selectedMonth,
+      item.valores.total_empenhado,
+      item.valores.total_saldo,
+      selectedYear
+    )
+  }))
+
   // Calculate totals for the header
   const totals = useMemo(() => {
     const totalSaldo = despesasPorElemento.reduce((sum, item) => 
@@ -127,13 +139,17 @@ function DashboardContent() {
       sum + item.valores.total_empenhado, 0
     );
     const percentualExecutado = totalSaldo ? (totalEmpenhado / totalSaldo) * 100 : 0;
+    
+    // Get the total projection from the first item (since it's the same for all)
+    const percentualExecutadoTotal = dadosProjecao[0]?.analise.percentualExecutadoTotal ?? 0;
 
     return {
       totalSaldo,
       totalEmpenhado,
-      percentualExecutado
+      percentualExecutado,
+      percentualExecutadoTotal
     };
-  }, [despesasPorElemento]);
+  }, [despesasPorElemento, dadosProjecao]);
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = parseInt(e.target.value, 10)
@@ -351,18 +367,6 @@ function DashboardContent() {
     fetchData()
   }, [user_id, selectedMonth, selectedYear])
 
-  // Preparar dados para a tabela de projeção
-  const dadosProjecao = despesasPorElemento.map(item => ({
-    ...item,
-    analise: calcularProjecaoEmpenho(
-      dadosHistoricos,
-      selectedMonth,
-      item.valores.total_empenhado,
-      item.valores.total_saldo,
-      selectedYear
-    )
-  }))
-
   if (error) {
     return (
       <div className="p-4 text-red-600">
@@ -450,6 +454,7 @@ function DashboardContent() {
         totalSaldo={totals.totalSaldo}
         totalEmpenhado={totals.totalEmpenhado}
         percentualExecutado={totals.percentualExecutado}
+        percentualExecutadoTotal={totals.percentualExecutadoTotal}
         mes={months.find(m => m.value === selectedMonth)?.label || ''}
         ano={selectedYear}
       />
