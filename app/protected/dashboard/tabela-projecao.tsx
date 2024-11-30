@@ -13,6 +13,17 @@ interface TabelaProjecaoProps {
 }
 
 export function TabelaProjecao({ dados, selectedMonth }: TabelaProjecaoProps) {
+  // Calculate totals
+  const totals = {
+    total_empenhado: dados.reduce((sum, item) => sum + item.valores.total_empenhado, 0),
+    total_saldo: dados.reduce((sum, item) => sum + item.valores.total_saldo, 0),
+    projecaoFinalAno: dados.reduce((sum, item) => sum + item.analise.projecaoFinalAno, 0),
+    percentualExecutado: 0
+  };
+
+  totals.percentualExecutado = (totals.projecaoFinalAno / totals.total_saldo) * 100 || 0;
+
+
   return (
     <div className="mt-8">
       <h2 className="text-xl font-semibold mb-4 text-center">
@@ -72,6 +83,43 @@ export function TabelaProjecao({ dados, selectedMonth }: TabelaProjecaoProps) {
                   </td>
                 </tr>
               ))}
+              {/* Total Row */}
+              <tr className="border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 font-bold">
+                <td className="px-4 py-2 text-center">Total</td>
+                <td className="px-4 py-2 text-center">
+                  {totals.total_empenhado.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0
+                  })}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  {totals.total_saldo.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0
+                  })}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  {totals.projecaoFinalAno.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  })}
+                </td>
+                <td className={`px-4 py-2 text-center ${
+                  totals.percentualExecutado <= 105 && totals.percentualExecutado >= 95 ? 'text-green-600' :
+                  totals.percentualExecutado > 105 ? 'text-red-600' :
+                  'text-yellow-600'
+                }`}>
+                  {totals.percentualExecutado <= 105 && totals.percentualExecutado >= 95 ? 'ADEQUADO' :
+                   totals.percentualExecutado > 105 ? 'ACIMA' : 'ABAIXO'}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  {totals.percentualExecutado.toFixed(1)}%
+                </td>
+              </tr>
           </tbody>
         </table>
       </div>

@@ -7,6 +7,7 @@ interface DashboardHeaderProps {
   percentualExecutadoTotal: number
   mes: string
   ano: number
+  projecaoFinalAno: number
 }
 
 export function DashboardHeader({ 
@@ -15,7 +16,8 @@ export function DashboardHeader({
   percentualExecutado,
   percentualExecutadoTotal,
   mes, 
-  ano 
+  ano, 
+  projecaoFinalAno
 }: DashboardHeaderProps) {
   return (
     <div className="space-y-4">
@@ -51,9 +53,19 @@ export function DashboardHeader({
 
         <FuturisticCard title="Projeção Orçamento">
           <p className="text-sm font-medium text-muted-foreground">Projeção Orçamento</p>
-          <p className="text-2xl font-bold">
-            {percentualExecutadoTotal.toFixed(1)}%
-          </p>
+          <div className="space-y-1">
+            <p className="text-2xl font-bold">
+              {projecaoFinalAno.toLocaleString('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+              })}
+            </p>
+            <p className="text-lg font-medium">
+              {percentualExecutadoTotal.toFixed(1)}%
+            </p>
+          </div>
         </FuturisticCard>
       </div>
     </div>

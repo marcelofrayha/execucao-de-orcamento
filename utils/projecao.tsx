@@ -117,13 +117,10 @@ export interface DadoHistoricoAgregado {
     const projecaoFinalAnoTotal = proporcaoMediaHistoricaTotal > 0
       ? (empenhoAtual / proporcaoMediaHistoricaTotal)
       : 0;
-
-    const percentualExecutado = projecaoFinalAno > 0 
-      ? (projecaoFinalAno / saldoAtual) * 100
-      : 0;
-    const percentualExecutadoTotal = projecaoFinalAnoTotal > 0 
-      ? (projecaoFinalAnoTotal / saldoAtual) * 100
-      : 0;
+    console.log('Projecao Final Ano:', projecaoFinalAno);
+    console.log('Projecao Final Ano Total:', projecaoFinalAnoTotal);  
+    const percentualExecutado = (projecaoFinalAno / saldoAtual) * 100;
+    const percentualExecutadoTotal = (projecaoFinalAnoTotal / saldoAtual) * 100;
 
     let statusExecucao: 'adequado' | 'abaixo' | 'acima';
     let statusExecucaoTotal: 'adequado' | 'abaixo' | 'acima';

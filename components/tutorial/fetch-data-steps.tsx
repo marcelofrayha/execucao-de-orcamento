@@ -57,6 +57,29 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
   const [previewData, setPreviewData] = useState<any[] | null>(null);
   const [tableType, setTableType] = useState<'Despesas' | 'Receitas'>('Despesas');
 
+  // Função para lidar com o download da tabela formatada
+  const handleDownload = () => {
+    if (!previewData) return;
+
+    // Definir os headers com base no tipo de tabela
+    const headers = tableType === 'Despesas'
+      ? ['Mês', 'Ano', 'Unidade Orçamentária', 'Fonte de Recurso', 'Elemento Despesa', 'Orçado', 'Saldo', 'Empenhado']
+      : ['Mês', 'Ano', 'Descrição', 'Fonte de Recurso', 'Orçado', 'Saldo', 'Receita'];
+
+    // Criar a matriz de dados incluindo os headers
+    const workbookData = [headers, ...previewData];
+
+    // Criar uma worksheet a partir da matriz de dados
+    const worksheet = XLSX.utils.aoa_to_sheet(workbookData);
+
+    // Criar um novo workbook e adicionar a worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Dados Processados');
+
+    // Gerar e baixar o arquivo XLSX
+    XLSX.writeFile(workbook, 'dados_formatados.xlsx');
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <FuturisticCard title="Dados sobre a despesa ou receita">
@@ -207,6 +230,15 @@ export default function FetchDataSteps({ user_id }: { user_id: string }) {
               </table>
             </div>
             <p className="mt-2 text-sm text-gray-600">Mostrando os primeiros 5 registros de {previewData.length} total.</p>
+            
+            {/* Botão para baixar a tabela formatada */}
+            <Button 
+              onClick={handleDownload}
+              className="mt-4 mr-4"
+            >
+              Baixar Tabela Formatada
+            </Button>
+            
             <button 
               onClick={() => uploadDataToSupabase(previewData, user_id, tableType)}
               className="mt-4 px-4 py-2 font-semibold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"

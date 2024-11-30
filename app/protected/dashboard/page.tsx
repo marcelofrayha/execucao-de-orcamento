@@ -109,7 +109,7 @@ function DashboardContent() {
   const [receitasPorFonte, setReceitasPorFonte] = useState<ReceitaPorFonte[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth)
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth - 1)
   const [selectedYear, setSelectedYear] = useState<number>(currentYear)
   const [dadosHistoricos, setDadosHistoricos] = useState<DadoHistoricoAgregado[]>([])
   const [showDetails, setShowDetails] = useState(false)
@@ -118,7 +118,6 @@ function DashboardContent() {
   const router = useRouter()
   const user_id = searchParams.get('user_id')
 
-  // Move dadosProjecao calculation before totals
   const dadosProjecao = despesasPorElemento.map(item => ({
     ...item,
     analise: calcularProjecaoEmpenho(
@@ -130,26 +129,37 @@ function DashboardContent() {
     )
   }))
 
-  // Calculate totals for the header
-  const totals = useMemo(() => {
-    const totalSaldo = despesasPorElemento.reduce((sum, item) => 
-      sum + item.valores.total_saldo, 0
-    );
-    const totalEmpenhado = despesasPorElemento.reduce((sum, item) => 
-      sum + item.valores.total_empenhado, 0
-    );
-    const percentualExecutado = totalSaldo ? (totalEmpenhado / totalSaldo) * 100 : 0;
-    
-    // Get the total projection from the first item (since it's the same for all)
-    const percentualExecutadoTotal = dadosProjecao[0]?.analise.percentualExecutadoTotal ?? 0;
+  const totals = {
+    unidade: despesasPorUnidade.reduce((acc, item) => ({
+      total_orcado: acc.total_orcado + item.valores.total_orcado,
+      total_saldo: acc.total_saldo + item.valores.total_saldo,
+      total_empenhado: acc.total_empenhado + item.valores.total_empenhado
+    }), { total_orcado: 0, total_saldo: 0, total_empenhado: 0 }),
 
-    return {
-      totalSaldo,
-      totalEmpenhado,
-      percentualExecutado,
-      percentualExecutadoTotal
-    };
-  }, [despesasPorElemento, dadosProjecao]);
+    fonte: despesasPorFonte.reduce((acc, item) => ({
+      total_orcado: acc.total_orcado + item.valores.total_orcado,
+      total_saldo: acc.total_saldo + item.valores.total_saldo,
+      total_empenhado: acc.total_empenhado + item.valores.total_empenhado
+    }), { total_orcado: 0, total_saldo: 0, total_empenhado: 0 }),
+
+    elemento: despesasPorElemento.reduce((acc, item) => ({
+      total_orcado: acc.total_orcado + item.valores.total_orcado,
+      total_saldo: acc.total_saldo + item.valores.total_saldo,
+      total_empenhado: acc.total_empenhado + item.valores.total_empenhado
+    }), { total_orcado: 0, total_saldo: 0, total_empenhado: 0 }),
+
+    receitaFonte: receitasPorFonte.reduce((acc, item) => ({
+      total_orcado: acc.total_orcado + item.total_orcado,
+      total_saldo: acc.total_saldo + item.total_saldo,
+      total_receita: acc.total_receita + item.total_receita
+    }), { total_orcado: 0, total_saldo: 0, total_receita: 0 }),
+
+    receitaDescricao: receitasPorDescricao.reduce((acc, item) => ({
+      total_orcado: acc.total_orcado + item.total_orcado,
+      total_saldo: acc.total_saldo + item.total_saldo,
+      total_receita: acc.total_receita + item.total_receita
+    }), { total_orcado: 0, total_saldo: 0, total_receita: 0 })
+  };
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = parseInt(e.target.value, 10)
@@ -449,10 +459,11 @@ function DashboardContent() {
 
       {/* Header with statistics */}
       <DashboardHeader 
-        totalSaldo={totals.totalSaldo}
-        totalEmpenhado={totals.totalEmpenhado}
-        percentualExecutado={totals.percentualExecutado}
-        percentualExecutadoTotal={totals.percentualExecutadoTotal}
+        totalSaldo={totals.unidade.total_saldo}
+        totalEmpenhado={totals.unidade.total_empenhado}
+        percentualExecutado={dadosProjecao.reduce((acc, item) => acc + (item.analise?.percentualExecutado || 0), 0)}
+        percentualExecutadoTotal={dadosProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAno / totals.unidade.total_saldo * 100 || 0), 0)}
+        projecaoFinalAno={dadosProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAno || 0), 0)}
         mes={months.find(m => m.value === selectedMonth)?.label || ''}
         ano={selectedYear}
       />
@@ -529,6 +540,30 @@ function DashboardContent() {
                           </td>
                         </tr>
                       ))}
+                      <tr className="border-t font-bold bg-muted/50">
+                        <td className="p-4">Total</td>
+                        <td className="text-right p-4">
+                          {totals.unidade.total_orcado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {totals.unidade.total_saldo.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {totals.unidade.total_empenhado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -574,6 +609,30 @@ function DashboardContent() {
                           </td>
                         </tr>
                       ))}
+                      <tr className="border-t font-bold bg-muted/50">
+                        <td className="p-4">Total</td>
+                        <td className="text-right p-4">
+                          {totals.fonte.total_orcado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {totals.fonte.total_saldo.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {totals.fonte.total_empenhado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -619,6 +678,30 @@ function DashboardContent() {
                           </td>
                         </tr>
                       ))}
+                      <tr className="border-t font-bold bg-muted/50">
+                        <td className="p-4">Total</td>
+                        <td className="text-right p-4">
+                          {totals.elemento.total_orcado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {totals.elemento.total_saldo.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {totals.elemento.total_empenhado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -664,6 +747,30 @@ function DashboardContent() {
                           </td>
                         </tr>
                       ))}
+                      <tr className="border-t font-bold bg-muted/50">
+                        <td className="p-4">Total</td>
+                        <td className="text-right p-4">
+                          {totals.receitaFonte.total_orcado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {totals.receitaFonte.total_saldo.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {totals.receitaFonte.total_receita.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -710,6 +817,30 @@ function DashboardContent() {
                             </td>
                           </tr>
                         ))}
+                        <tr className="border-t font-bold bg-muted/50">
+                          <td className="p-4">Total</td>
+                          <td className="text-right p-4">
+                            {totals.receitaDescricao.total_orcado.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {totals.receitaDescricao.total_saldo.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {totals.receitaDescricao.total_receita.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
