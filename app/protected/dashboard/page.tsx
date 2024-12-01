@@ -109,11 +109,16 @@ function DashboardContent() {
   const [receitasPorFonte, setReceitasPorFonte] = useState<ReceitaPorFonte[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth - 1)
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth - 2)
   const [selectedYear, setSelectedYear] = useState<number>(currentYear)
   const [dadosHistoricos, setDadosHistoricos] = useState<DadoHistoricoAgregado[]>([])
   const [dadosHistoricosReceitas, setDadosHistoricosReceitas] = useState<DadoHistoricoReceitaAgregado[]>([])
-  const [showDetails, setShowDetails] = useState(false)
+  
+  // New state variables for separate collapsibles
+  const [showDespesasDetails, setShowDespesasDetails] = useState(false)
+  const [showReceitasDetails, setShowReceitasDetails] = useState(false)
+
+  const [showDetails, setShowDetails] = useState(false) // You can remove or keep this based on preference
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -522,27 +527,28 @@ function DashboardContent() {
           />
         </div>
 
-        {/* Collapsible Details Section */}
+        {/* Collapsible Details Sections */}
         <div className="space-y-4">
+          {/* Despesas Collapsible */}
           <Button
-            onClick={() => setShowDetails(!showDetails)}
+            onClick={() => setShowDespesasDetails(!showDespesasDetails)}
             variant="outline"
             className="w-full flex items-center justify-center gap-2"
           >
-            {showDetails ? (
+            {showDespesasDetails ? (
               <>
                 <ChevronUp className="h-4 w-4" />
-                Ocultar Detalhes
+                Ocultar Detalhes de Despesas
               </>
             ) : (
               <>
                 <ChevronDown className="h-4 w-4" />
-                Mostrar Detalhes
+                Mostrar Detalhes de Despesas
               </>
             )}
           </Button>
 
-          {showDetails && (
+          {showDespesasDetails && (
             <div className="space-y-8">
               {/* Despesas por Unidade */}
               <div className="bg-card rounded-lg shadow-sm p-6">
@@ -750,8 +756,31 @@ function DashboardContent() {
                   </table>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Updated Receitas por Fonte table */}
+          {/* Receitas Collapsible */}
+          <Button
+            onClick={() => setShowReceitasDetails(!showReceitasDetails)}
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2"
+          >
+            {showReceitasDetails ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Ocultar Detalhes de Receitas
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Mostrar Detalhes de Receitas
+              </>
+            )}
+          </Button>
+
+          {showReceitasDetails && (
+            <div className="space-y-8">
+              {/* Receitas por Fonte */}
               <div className="bg-card rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold mb-6">Receitas por Fonte de Recurso</h2>
                 <div className="overflow-x-auto">
@@ -845,7 +874,7 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Receitas por Descrição with scroll */}
+              {/* Receitas por Descrição */}
               <div className="bg-card rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold mb-6">Receitas por Descrição</h2>
                 <div className="overflow-x-auto">
