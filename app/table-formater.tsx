@@ -13,7 +13,7 @@ function convertToNumber(value: any): number {
     if (typeof value === 'number') {
         return Math.round(value);
     }
-    const strValue = String(value).replace('.', '').replace(',', '.');
+    const strValue = String(value).replace(/\./g, '').replace(',', '.');
     const numValue = parseFloat(strValue.replace(/[^\d.-]/g, ''));
     return isNaN(numValue) ? 0 : Math.round(numValue);
 }

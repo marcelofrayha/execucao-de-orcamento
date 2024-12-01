@@ -11,7 +11,7 @@ function convertToNumber(value: any): number {
     let strValue = value.toString().trim();
     const isNegative = strValue.startsWith('(') && strValue.endsWith(')');
 
-    strValue = strValue.replace('.', '').replace(',', '.');
+    strValue = strValue.replace(/\./g, '').replace(',', '.');
     strValue = strValue.replace(/[^\d.-]/g, '');
 
     const number = parseFloat(strValue);

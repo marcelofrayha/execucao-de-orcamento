@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState, Suspense, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { agregadorUnidadeOrcamentaria, agregadorFonteRecurso, agregadorElementoDespesa } from './agregadores'
-import { calcularProjecaoEmpenho, processarDadosHistoricos, DadoHistoricoAgregado } from '@/utils/projecao';
+import { calcularProjecaoEmpenho, calcularProjecaoReceita, processarDadosHistoricos, DadoHistoricoAgregado, DadoHistoricoReceitaAgregado, processarDadosHistoricosReceitas } from '@/utils/projecao';
 import { TabelaProjecao } from './tabela-projecao';
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -112,6 +112,7 @@ function DashboardContent() {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth - 1)
   const [selectedYear, setSelectedYear] = useState<number>(currentYear)
   const [dadosHistoricos, setDadosHistoricos] = useState<DadoHistoricoAgregado[]>([])
+  const [dadosHistoricosReceitas, setDadosHistoricosReceitas] = useState<DadoHistoricoReceitaAgregado[]>([])
   const [showDetails, setShowDetails] = useState(false)
 
   const searchParams = useSearchParams()
@@ -125,6 +126,17 @@ function DashboardContent() {
       selectedMonth,
       item.valores.total_empenhado,
       item.valores.total_saldo,
+      selectedYear
+    )
+  }))
+
+  const receitasPorFonteComProjecao = receitasPorFonte.map(item => ({
+    ...item,
+    analise: calcularProjecaoReceita(
+      dadosHistoricosReceitas,
+      selectedMonth,
+      item.total_receita,
+      item.total_saldo,
       selectedYear
     )
   }))
@@ -201,7 +213,7 @@ function DashboardContent() {
         // if (yearsError) throw new Error(`Error fetching years: ${yearsError.message}`)
         
         // Then use these years in the main query
-        const [despesasData, despesas12Data, receitasData] = await Promise.all([
+        const [despesasData, despesas12Data, receitasData, receitasHistoricas] = await Promise.all([
           fetchAllDespesas(supabase, user_id, selectedMonth),
           selectedMonth !== 12 && fetchAllDespesas(supabase, user_id, 12),
           supabase
@@ -211,7 +223,19 @@ function DashboardContent() {
             .eq('mes', Number(selectedMonth))
             .eq('ano', Number(selectedYear))
             .range(0, 999),
-        ])
+          supabase
+            .from('Receitas')
+            .select('*')
+            .eq('user_id', user_id)
+            .lte('ano', Number(selectedYear))
+            .range(0, 999),
+        ]);
+
+        console.log('DEBUG - Raw Receitas Data:', {
+          currentMonth: receitasData.data,
+          historical: receitasHistoricas.data
+        });
+
         const processedDespesas = despesasData || [];
         // Combine all despesas data for historical analysis
         const combinedDespesas = [
@@ -364,6 +388,14 @@ function DashboardContent() {
         console.log('Dados Historicos:', combinedDespesas)
         setDadosHistoricos(dadosAgregados);
 
+        // Process historical revenue data
+        const dadosHistoricosReceitasProcessados = processarDadosHistoricosReceitas(receitasHistoricas.data || [], selectedYear);
+        console.log('DEBUG - Processed Historical Receitas:', {
+          before: receitasHistoricas.data,
+          after: dadosHistoricosReceitasProcessados
+        });
+        setDadosHistoricosReceitas(dadosHistoricosReceitasProcessados);
+
       } catch (err) {
         console.error('Error fetching data:', err)
         setError(err instanceof Error ? err.message : 'An error occurred')
@@ -412,6 +444,14 @@ function DashboardContent() {
       </div>
     )
   }
+
+  // Calculate revenue totals for header
+  const headerRevenueTotals = {
+    saldoReceita: totals.receitaFonte.total_saldo,
+    receitaMes: totals.receitaFonte.total_receita,
+    projecaoReceita: receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAnoReceita || 0), 0),
+    percentualReceitaProjetada: receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.percentualReceitaExecutado || 0), 0) / receitasPorFonteComProjecao.length
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-12">
@@ -462,10 +502,14 @@ function DashboardContent() {
         totalSaldo={totals.unidade.total_saldo}
         totalEmpenhado={totals.unidade.total_empenhado}
         percentualExecutado={dadosProjecao.reduce((acc, item) => acc + (item.analise?.percentualExecutado || 0), 0)}
-        percentualExecutadoTotal={dadosProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAno / totals.unidade.total_saldo * 100 || 0), 0)}
+        percentualExecutadoTotal={dadosProjecao.reduce((acc, item) => acc + ((item.analise?.projecaoFinalAno || 0) / totals.unidade.total_saldo) * 100, 0)}
         projecaoFinalAno={dadosProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAno || 0), 0)}
         mes={months.find(m => m.value === selectedMonth)?.label || ''}
         ano={selectedYear}
+        saldoReceita={headerRevenueTotals.saldoReceita}
+        receitaMes={headerRevenueTotals.receitaMes}
+        projecaoReceita={headerRevenueTotals.projecaoReceita}
+        percentualReceitaProjetada={headerRevenueTotals.percentualReceitaProjetada}
       />
 
       {/* Main content sections */}
@@ -707,7 +751,7 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Receitas por Fonte */}
+              {/* Updated Receitas por Fonte table */}
               <div className="bg-card rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold mb-6">Receitas por Fonte de Recurso</h2>
                 <div className="overflow-x-auto">
@@ -718,10 +762,12 @@ function DashboardContent() {
                         <th className="text-right p-4">Orçado</th>
                         <th className="text-right p-4">Saldo</th>
                         <th className="text-right p-4">Receita</th>
+                        <th className="text-right p-4">Projeção</th>
+                        <th className="text-right p-4">Projeção %</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {receitasPorFonte.map((item, index) => (
+                      {receitasPorFonteComProjecao.map((item, index) => (
                         <tr key={index} className="border-b hover:bg-muted/50">
                           <td className="p-4">{item.fonte_de_recurso}</td>
                           <td className="text-right p-4">
@@ -744,6 +790,17 @@ function DashboardContent() {
                               currency: 'BRL',
                               minimumFractionDigits: 0
                             })}
+                          </td>
+                          <td className="text-right p-4">
+                            {item.analise?.projecaoFinalAnoReceita.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {`${(item.analise?.percentualReceitaExecutado || 0).toFixed(1)}%`}
                           </td>
                         </tr>
                       ))}
@@ -769,6 +826,18 @@ function DashboardContent() {
                             currency: 'BRL',
                             minimumFractionDigits: 0
                           })}
+                        </td>
+                        <td className="text-right p-4">
+                          {receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAnoReceita || 0), 0)
+                            .toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0
+                            })}
+                        </td>
+                        <td className="text-right p-4">
+                          {`${(receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.percentualReceitaExecutado || 0), 0) / receitasPorFonteComProjecao.length).toFixed(1)}%`}
                         </td>
                       </tr>
                     </tbody>

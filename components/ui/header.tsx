@@ -8,6 +8,10 @@ interface DashboardHeaderProps {
   mes: string
   ano: number
   projecaoFinalAno: number
+  saldoReceita: number
+  receitaMes: number
+  projecaoReceita: number
+  percentualReceitaProjetada: number
 }
 
 export function DashboardHeader({ 
@@ -17,7 +21,11 @@ export function DashboardHeader({
   percentualExecutadoTotal,
   mes, 
   ano, 
-  projecaoFinalAno
+  projecaoFinalAno,
+  saldoReceita,
+  receitaMes,
+  projecaoReceita,
+  percentualReceitaProjetada
 }: DashboardHeaderProps) {
   return (
     <div className="space-y-4">
@@ -64,6 +72,45 @@ export function DashboardHeader({
             </p>
             <p className="text-lg font-medium">
               {percentualExecutadoTotal.toFixed(1)}%
+            </p>
+          </div>
+        </FuturisticCard>
+
+        <FuturisticCard title="Saldo Receita">
+          <p className="text-sm font-medium text-muted-foreground">Saldo Receita</p>
+          <p className="text-2xl font-bold">
+            {saldoReceita.toLocaleString('pt-BR', { 
+              style: 'currency', 
+              currency: 'BRL',
+              minimumFractionDigits: 0
+            })}
+          </p>
+        </FuturisticCard>
+
+        <FuturisticCard title="Receita do Mês">
+          <p className="text-sm font-medium text-muted-foreground">Receita {mes}</p>
+          <p className="text-2xl font-bold">
+            {receitaMes.toLocaleString('pt-BR', { 
+              style: 'currency', 
+              currency: 'BRL',
+              minimumFractionDigits: 0
+            })}
+          </p>
+        </FuturisticCard>
+
+        <FuturisticCard title="Projeção Receita">
+          <p className="text-sm font-medium text-muted-foreground">Projeção Receita</p>
+          <div className="space-y-1">
+            <p className="text-2xl font-bold">
+              {projecaoReceita.toLocaleString('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+              })}
+            </p>
+            <p className="text-lg font-medium">
+              {percentualReceitaProjetada.toFixed(1)}%
             </p>
           </div>
         </FuturisticCard>
