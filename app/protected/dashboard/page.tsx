@@ -11,6 +11,10 @@ import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { DashboardHeader } from '@/components/ui/header'
 
+// Import Graph Components
+import DespesasGraph from './components/DespesasGraph'
+import ReceitasGraph from './components/ReceitasGraph'
+
 interface ValoresAgregados {
     total_orcado: number
     total_saldo: number
@@ -101,6 +105,43 @@ async function fetchAllDespesas(supabase: any, user_id: string, month: number) {
   return allData;
 }
 
+interface CollapsibleSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, children }) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className="space-y-4">
+      <Button
+        onClick={() => setIsOpen(!isOpen)}
+        variant="outline"
+        className="w-full flex items-center justify-center gap-2"
+      >
+        {isOpen ? (
+          <>
+            <ChevronUp className="h-4 w-4" />
+            Ocultar {title}
+          </>
+        ) : (
+          <>
+            <ChevronDown className="h-4 w-4" />
+            Mostrar {title}
+          </>
+        )}
+      </Button>
+
+      {isOpen && (
+        <div className="space-y-8">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DashboardContent() {
   const [despesasPorUnidade, setDespesasPorUnidade] = useState<DespesasPorUnidade[]>([])
   const [despesasPorFonte, setDespesasPorFonte] = useState<DespesasPorFonte[]>([])
@@ -117,8 +158,6 @@ function DashboardContent() {
   // New state variables for separate collapsibles
   const [showDespesasDetails, setShowDespesasDetails] = useState(false)
   const [showReceitasDetails, setShowReceitasDetails] = useState(false)
-
-  const [showDetails, setShowDetails] = useState(false) // You can remove or keep this based on preference
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -527,278 +566,351 @@ function DashboardContent() {
           />
         </div>
 
+        {/* Graphical Representations */}
+        <div className="space-y-16">
+          {/* Despesas Graph */}
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight mb-8 bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">
+              Histórico de Despesas
+            </h2>
+            <DespesasGraph dadosHistoricos={dadosHistoricos} />
+          </div>
+
+          {/* Receitas Graph */}
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight mb-8 bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">
+              Histórico de Receitas
+            </h2>
+            <ReceitasGraph dadosHistoricosReceitas={dadosHistoricosReceitas} />
+          </div>
+        </div>
+
         {/* Collapsible Details Sections */}
         <div className="space-y-4">
           {/* Despesas Collapsible */}
-          <Button
-            onClick={() => setShowDespesasDetails(!showDespesasDetails)}
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            {showDespesasDetails ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                Ocultar Detalhes de Despesas
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                Mostrar Detalhes de Despesas
-              </>
-            )}
-          </Button>
-
-          {showDespesasDetails && (
-            <div className="space-y-8">
-              {/* Despesas por Unidade */}
-              <div className="bg-card rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6">Despesas por Unidade Orçamentária</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-4">Unidade Orçamentária</th>
-                        <th className="text-right p-4">Orçado</th>
-                        <th className="text-right p-4">Saldo</th>
-                        <th className="text-right p-4">Empenhado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {despesasPorUnidade.map((item, index) => (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{item.unidade_orcamentaria}</td>
-                          <td className="text-right p-4">
-                            {item.valores.total_orcado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {item.valores.total_saldo.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {item.valores.total_empenhado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="border-t font-bold bg-muted/50">
-                        <td className="p-4">Total</td>
+          <CollapsibleSection title="Detalhes de Despesas">
+            {/* Despesas por Unidade */}
+            <div className="bg-card rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold mb-6">Despesas por Unidade Orçamentária</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">Unidade Orçamentária</th>
+                      <th className="text-right p-4">Orçado</th>
+                      <th className="text-right p-4">Saldo</th>
+                      <th className="text-right p-4">Empenhado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {despesasPorUnidade.map((item, index) => (
+                      <tr key={index} className="border-b hover:bg-muted/50">
+                        <td className="p-4">{item.unidade_orcamentaria}</td>
                         <td className="text-right p-4">
-                          {totals.unidade.total_orcado.toLocaleString('pt-BR', { 
+                          {item.valores.total_orcado.toLocaleString('pt-BR', { 
                             style: 'currency', 
                             currency: 'BRL',
                             minimumFractionDigits: 0
                           })}
                         </td>
                         <td className="text-right p-4">
-                          {totals.unidade.total_saldo.toLocaleString('pt-BR', { 
+                          {item.valores.total_saldo.toLocaleString('pt-BR', { 
                             style: 'currency', 
                             currency: 'BRL',
                             minimumFractionDigits: 0
                           })}
                         </td>
                         <td className="text-right p-4">
-                          {totals.unidade.total_empenhado.toLocaleString('pt-BR', { 
+                          {item.valores.total_empenhado.toLocaleString('pt-BR', { 
                             style: 'currency', 
                             currency: 'BRL',
                             minimumFractionDigits: 0
                           })}
                         </td>
                       </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Despesas por Fonte */}
-              <div className="bg-card rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6">Despesas por Fonte de Recurso</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-4">Fonte de Recurso</th>
-                        <th className="text-right p-4">Orçado</th>
-                        <th className="text-right p-4">Saldo</th>
-                        <th className="text-right p-4">Empenhado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {despesasPorFonte.map((item, index) => (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{item.fonte_de_recurso}</td>
-                          <td className="text-right p-4">
-                            {item.valores.total_orcado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {item.valores.total_saldo.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {item.valores.total_empenhado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="border-t font-bold bg-muted/50">
-                        <td className="p-4">Total</td>
-                        <td className="text-right p-4">
-                          {totals.fonte.total_orcado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {totals.fonte.total_saldo.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {totals.fonte.total_empenhado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Despesas por Elemento */}
-              <div className="bg-card rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6">Despesas por Elemento</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-4">Elemento da Despesa</th>
-                        <th className="text-right p-4">Orçado</th>
-                        <th className="text-right p-4">Saldo</th>
-                        <th className="text-right p-4">Empenhado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {despesasPorElemento.map((item, index) => (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{item.elemento_despesa}</td>
-                          <td className="text-right p-4">
-                            {item.valores.total_orcado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {item.valores.total_saldo.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {item.valores.total_empenhado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="border-t font-bold bg-muted/50">
-                        <td className="p-4">Total</td>
-                        <td className="text-right p-4">
-                          {totals.elemento.total_orcado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {totals.elemento.total_saldo.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {totals.elemento.total_empenhado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                    <tr className="border-t font-bold bg-muted/50">
+                      <td className="p-4">Total</td>
+                      <td className="text-right p-4">
+                        {totals.unidade.total_orcado.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {totals.unidade.total_saldo.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {totals.unidade.total_empenhado.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-          )}
+
+            {/* Despesas por Fonte */}
+            <div className="bg-card rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold mb-6">Despesas por Fonte de Recurso</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">Fonte de Recurso</th>
+                      <th className="text-right p-4">Orçado</th>
+                      <th className="text-right p-4">Saldo</th>
+                      <th className="text-right p-4">Empenhado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {despesasPorFonte.map((item, index) => (
+                      <tr key={index} className="border-b hover:bg-muted/50">
+                        <td className="p-4">{item.fonte_de_recurso}</td>
+                        <td className="text-right p-4">
+                          {item.valores.total_orcado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="border-t font-bold bg-muted/50">
+                      <td className="p-4">Total</td>
+                      <td className="text-right p-4">
+                        {totals.fonte.total_orcado.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {totals.fonte.total_saldo.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {totals.fonte.total_empenhado.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Despesas por Elemento */}
+            <div className="bg-card rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold mb-6">Despesas por Elemento</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">Elemento da Despesa</th>
+                      <th className="text-right p-4">Orçado</th>
+                      <th className="text-right p-4">Saldo</th>
+                      <th className="text-right p-4">Empenhado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {despesasPorElemento.map((item, index) => (
+                      <tr key={index} className="border-b hover:bg-muted/50">
+                        <td className="p-4">{item.elemento_despesa}</td>
+                        <td className="text-right p-4">
+                          {item.valores.total_orcado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="border-t font-bold bg-muted/50">
+                      <td className="p-4">Total</td>
+                      <td className="text-right p-4">
+                        {totals.elemento.total_orcado.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {totals.elemento.total_saldo.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {totals.elemento.total_empenhado.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </CollapsibleSection>
 
           {/* Receitas Collapsible */}
-          <Button
-            onClick={() => setShowReceitasDetails(!showReceitasDetails)}
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            {showReceitasDetails ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                Ocultar Detalhes de Receitas
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                Mostrar Detalhes de Receitas
-              </>
-            )}
-          </Button>
+          <CollapsibleSection title="Detalhes de Receitas">
+            {/* Receitas por Fonte */}
+            <div className="bg-card rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold mb-6">Receitas por Fonte de Recurso</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">Fonte de Recurso</th>
+                      <th className="text-right p-4">Orçado</th>
+                      <th className="text-right p-4">Saldo</th>
+                      <th className="text-right p-4">Receita</th>
+                      <th className="text-right p-4">Projeção</th>
+                      <th className="text-right p-4">Projeção %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {receitasPorFonteComProjecao.map((item, index) => (
+                      <tr key={index} className="border-b hover:bg-muted/50">
+                        <td className="p-4">{item.fonte_de_recurso}</td>
+                        <td className="text-right p-4">
+                          {item.total_orcado.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {item.total_saldo.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {item.total_receita.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {item.analise?.projecaoFinalAnoReceita.toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                          })}
+                        </td>
+                        <td className="text-right p-4">
+                          {`${(item.analise?.percentualReceitaExecutado || 0).toFixed(1)}%`}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="border-t font-bold bg-muted/50">
+                      <td className="p-4">Total</td>
+                      <td className="text-right p-4">
+                        {totals.receitaFonte.total_orcado.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {totals.receitaFonte.total_saldo.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {totals.receitaFonte.total_receita.toLocaleString('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        })}
+                      </td>
+                      <td className="text-right p-4">
+                        {receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAnoReceita || 0), 0)
+                          .toLocaleString('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                          })}
+                      </td>
+                      <td className="text-right p-4">
+                        {`${(receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.percentualReceitaExecutado || 0), 0) / receitasPorFonteComProjecao.length).toFixed(1)}%`}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-          {showReceitasDetails && (
-            <div className="space-y-8">
-              {/* Receitas por Fonte */}
-              <div className="bg-card rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6">Receitas por Fonte de Recurso</h2>
-                <div className="overflow-x-auto">
+            {/* Receitas por Descrição */}
+            <div className="bg-card rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold mb-6">Receitas por Descrição</h2>
+              <div className="overflow-x-auto">
+                <div className="max-h-[400px] overflow-y-auto">
                   <table className="w-full">
-                    <thead>
+                    <thead className="sticky top-0 bg-card z-10 shadow-sm">
                       <tr className="border-b">
-                        <th className="text-left p-4">Fonte de Recurso</th>
+                        <th className="text-left p-4">Descrição</th>
                         <th className="text-right p-4">Orçado</th>
                         <th className="text-right p-4">Saldo</th>
                         <th className="text-right p-4">Receita</th>
-                        <th className="text-right p-4">Projeção</th>
-                        <th className="text-right p-4">Projeção %</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {receitasPorFonteComProjecao.map((item, index) => (
+                      {receitasPorDescricao.map((item, index) => (
                         <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{item.fonte_de_recurso}</td>
+                          <td className="p-4">{item.descricao}</td>
                           <td className="text-right p-4">
                             {item.total_orcado.toLocaleString('pt-BR', { 
                               style: 'currency', 
@@ -820,132 +932,38 @@ function DashboardContent() {
                               minimumFractionDigits: 0
                             })}
                           </td>
-                          <td className="text-right p-4">
-                            {item.analise?.projecaoFinalAnoReceita.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {`${(item.analise?.percentualReceitaExecutado || 0).toFixed(1)}%`}
-                          </td>
                         </tr>
                       ))}
                       <tr className="border-t font-bold bg-muted/50">
                         <td className="p-4">Total</td>
                         <td className="text-right p-4">
-                          {totals.receitaFonte.total_orcado.toLocaleString('pt-BR', { 
+                          {totals.receitaDescricao.total_orcado.toLocaleString('pt-BR', { 
                             style: 'currency', 
                             currency: 'BRL',
                             minimumFractionDigits: 0
                           })}
                         </td>
                         <td className="text-right p-4">
-                          {totals.receitaFonte.total_saldo.toLocaleString('pt-BR', { 
+                          {totals.receitaDescricao.total_saldo.toLocaleString('pt-BR', { 
                             style: 'currency', 
                             currency: 'BRL',
                             minimumFractionDigits: 0
                           })}
                         </td>
                         <td className="text-right p-4">
-                          {totals.receitaFonte.total_receita.toLocaleString('pt-BR', { 
+                          {totals.receitaDescricao.total_receita.toLocaleString('pt-BR', { 
                             style: 'currency', 
                             currency: 'BRL',
                             minimumFractionDigits: 0
                           })}
-                        </td>
-                        <td className="text-right p-4">
-                          {receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAnoReceita || 0), 0)
-                            .toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0
-                            })}
-                        </td>
-                        <td className="text-right p-4">
-                          {`${(receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.percentualReceitaExecutado || 0), 0) / receitasPorFonteComProjecao.length).toFixed(1)}%`}
                         </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
-
-              {/* Receitas por Descrição */}
-              <div className="bg-card rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6">Receitas por Descrição</h2>
-                <div className="overflow-x-auto">
-                  <div className="max-h-[400px] overflow-y-auto">
-                    <table className="w-full">
-                      <thead className="sticky top-0 bg-card z-10 shadow-sm">
-                        <tr className="border-b">
-                          <th className="text-left p-4">Descrição</th>
-                          <th className="text-right p-4">Orçado</th>
-                          <th className="text-right p-4">Saldo</th>
-                          <th className="text-right p-4">Receita</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {receitasPorDescricao.map((item, index) => (
-                          <tr key={index} className="border-b hover:bg-muted/50">
-                            <td className="p-4">{item.descricao}</td>
-                            <td className="text-right p-4">
-                              {item.total_orcado.toLocaleString('pt-BR', { 
-                                style: 'currency', 
-                                currency: 'BRL',
-                                minimumFractionDigits: 0
-                              })}
-                            </td>
-                            <td className="text-right p-4">
-                              {item.total_saldo.toLocaleString('pt-BR', { 
-                                style: 'currency', 
-                                currency: 'BRL',
-                                minimumFractionDigits: 0
-                              })}
-                            </td>
-                            <td className="text-right p-4">
-                              {item.total_receita.toLocaleString('pt-BR', { 
-                                style: 'currency', 
-                                currency: 'BRL',
-                                minimumFractionDigits: 0
-                              })}
-                            </td>
-                          </tr>
-                        ))}
-                        <tr className="border-t font-bold bg-muted/50">
-                          <td className="p-4">Total</td>
-                          <td className="text-right p-4">
-                            {totals.receitaDescricao.total_orcado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {totals.receitaDescricao.total_saldo.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {totals.receitaDescricao.total_receita.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
             </div>
-          )}
+          </CollapsibleSection>
         </div>
       </div>
     </div>
