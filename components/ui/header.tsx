@@ -30,7 +30,7 @@ export function DashboardHeader({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard Orçamentário</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Análise Orçamentária</h1>
         <h2 className="text-2xl font-semibold text-muted-foreground">
           {mes} / {ano}
         </h2>
@@ -87,7 +87,7 @@ export function DashboardHeader({
           </p>
         </FuturisticCard>
 
-        <FuturisticCard title="Receita Empenhada">
+        <FuturisticCard title="Receita Realizada">
           <p className="text-sm font-medium text-muted-foreground">Receita até {mes}</p>
           <p className="text-2xl font-bold">
             {receitaMes.toLocaleString('pt-BR', { 

@@ -214,6 +214,7 @@ function DashboardContent() {
   const [dadosHistoricos, setDadosHistoricos] = useState<DadoHistoricoAgregado[]>([])
   const [dadosHistoricosReceitas, setDadosHistoricosReceitas] = useState<DadoHistoricoReceitaAgregado[]>([])
   const [historicalDespesas, setHistoricalDespesas] = useState<any[]>([]);
+  const [despesasPorUnidadeFonte, setDespesasPorUnidadeFonte] = useState<Array<{ unidade_fonte: string, valores: ValoresAgregados }>>([]);
   
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -221,6 +222,11 @@ function DashboardContent() {
 
   const dadosProjecao = despesasPorElemento.map(item => ({
     ...item,
+    fonte_recurso: 'Todas',
+    valores: {
+      total_empenhado: item.valores.total_empenhado,
+      total_saldo: item.valores.total_saldo
+    },
     analise: calcularProjecaoEmpenho(
       dadosHistoricos,
       selectedMonth,
@@ -487,6 +493,36 @@ function DashboardContent() {
         });
         setDadosHistoricosReceitas(dadosHistoricosReceitasProcessados);
 
+        // Agregar despesas por Unidade e Fonte de Recurso
+        const unidadeFonteMap = new Map<string, ValoresAgregados>();
+
+        despesasDisplay.forEach((d) => {
+          const mappedUnidade = agregadorUnidadeOrcamentaria[String(d.unidade_orcamentaria)] || d.unidade_orcamentaria;
+          const mappedFonte = agregadorFonteRecurso[String(d.fonte_de_recurso)] || d.fonte_de_recurso;
+
+          const chave = `${mappedUnidade} - ${mappedFonte}`;
+
+          const existing = unidadeFonteMap.get(chave) || { 
+            total_orcado: 0, 
+            total_saldo: 0, 
+            total_empenhado: 0 
+          };
+          
+          unidadeFonteMap.set(chave, {
+            total_orcado: existing.total_orcado + (d.orcado || 0),
+            total_saldo: existing.total_saldo + (d.saldo || 0),
+            total_empenhado: existing.total_empenhado + (d.empenhado || 0)
+          });
+        });
+
+        // Transformar o Map em um array para renderização
+        setDespesasPorUnidadeFonte(
+          Array.from(unidadeFonteMap.entries()).map(([chave, valores]) => ({
+            unidade_fonte: chave,
+            valores
+          }))
+        );
+
       } catch (error) {
         console.error('Error fetching data:', error);
         setError(error instanceof Error ? error.message : 'An error occurred');
@@ -643,64 +679,70 @@ function DashboardContent() {
           <CollapsibleSection title="Detalhes de Despesas">
             {/* Despesas por Unidade */}
             <div className="bg-card rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold mb-6">Despesas por Unidade Orçamentária</h2>
+              <h2 className="text-xl font-semibold mb-6">Despesas por Unidade Orçamentária e Fonte de Recurso</h2>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-4">Unidade Orçamentária</th>
-                      <th className="text-right p-4">Orçado</th>
-                      <th className="text-right p-4">Saldo</th>
+                      <th className="text-left p-4">Fonte de Recurso</th>
+                      <th className="text-right p-4">Orçado em Janeiro</th>
+                      <th className="text-right p-4">Orçado em {months[selectedMonth].label}</th>
                       <th className="text-right p-4">Empenhado</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {despesasPorUnidade
+                    {despesasPorUnidadeFonte
                       .filter(item => item.valores.total_saldo !== 0)
-                      .map((item, index) => (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{item.unidade_orcamentaria}</td>
-                          <td className="text-right p-4">
-                            {item.valores.total_orcado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {item.valores.total_saldo.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                          <td className="text-right p-4">
-                            {item.valores.total_empenhado.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL',
-                              minimumFractionDigits: 0
-                            })}
-                          </td>
-                        </tr>
-                      ))}
+                      .map((item, index) => {
+                        const [unidade, fonte] = item.unidade_fonte.split(' - ');
+                        return (
+                          <tr key={index} className="border-b hover:bg-muted/50">
+                            <td className="p-4">{unidade}</td>
+                            <td className="p-4">{fonte}</td>
+                            <td className="text-right p-4">
+                              {item.valores.total_orcado.toLocaleString('pt-BR', { 
+                                style: 'currency', 
+                                currency: 'BRL',
+                                minimumFractionDigits: 0
+                              })}
+                            </td>
+                            <td className="text-right p-4">
+                              {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                                style: 'currency', 
+                                currency: 'BRL',
+                                minimumFractionDigits: 0
+                              })}
+                            </td>
+                            <td className="text-right p-4">
+                              {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                                style: 'currency', 
+                                currency: 'BRL',
+                                minimumFractionDigits: 0
+                              })}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     <tr className="border-t font-bold bg-muted/50">
                       <td className="p-4">Total</td>
+                      <td className="p-4"></td>
                       <td className="text-right p-4">
-                        {totals.unidade.total_orcado.toLocaleString('pt-BR', { 
+                        {despesasPorUnidadeFonte.reduce((sum, item) => sum + item.valores.total_orcado, 0).toLocaleString('pt-BR', { 
                           style: 'currency', 
                           currency: 'BRL',
                           minimumFractionDigits: 0
                         })}
                       </td>
                       <td className="text-right p-4">
-                        {totals.unidade.total_saldo.toLocaleString('pt-BR', { 
+                        {despesasPorUnidadeFonte.reduce((sum, item) => sum + item.valores.total_saldo, 0).toLocaleString('pt-BR', { 
                           style: 'currency', 
                           currency: 'BRL',
                           minimumFractionDigits: 0
                         })}
                       </td>
                       <td className="text-right p-4">
-                        {totals.unidade.total_empenhado.toLocaleString('pt-BR', { 
+                        {despesasPorUnidadeFonte.reduce((sum, item) => sum + item.valores.total_empenhado, 0).toLocaleString('pt-BR', { 
                           style: 'currency', 
                           currency: 'BRL',
                           minimumFractionDigits: 0
@@ -720,8 +762,8 @@ function DashboardContent() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-4">Fonte de Recurso</th>
-                      <th className="text-right p-4">Orçado</th>
-                      <th className="text-right p-4">Saldo</th>
+                      <th className="text-right p-4">Orçado em Janeiro</th>
+                      <th className="text-right p-4">Orçado em {months[selectedMonth].label}</th>
                       <th className="text-right p-4">Empenhado</th>
                     </tr>
                   </thead>
@@ -791,8 +833,8 @@ function DashboardContent() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-4">Elemento da Despesa</th>
-                      <th className="text-right p-4">Orçado</th>
-                      <th className="text-right p-4">Saldo</th>
+                      <th className="text-right p-4">Orçado em Janeiro</th>
+                      <th className="text-right p-4">Orçado em {months[selectedMonth].label}</th>
                       <th className="text-right p-4">Empenhado</th>
                     </tr>
                   </thead>
@@ -865,8 +907,8 @@ function DashboardContent() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-4">Fonte de Recurso</th>
-                      <th className="text-right p-4">Orçado</th>
-                      <th className="text-right p-4">Saldo</th>
+                      <th className="text-right p-4">Orçado em Janeiro</th>
+                      <th className="text-right p-4">Orçado em {months[selectedMonth].label}</th>
                       <th className="text-right p-4">Receita</th>
                       <th className="text-right p-4">Projeção</th>
                       <th className="text-right p-4">Projeção %</th>
@@ -960,8 +1002,8 @@ function DashboardContent() {
                     <thead className="sticky top-0 bg-card z-10 shadow-sm">
                       <tr className="border-b">
                         <th className="text-left p-4">Descrição</th>
-                        <th className="text-right p-4">Orçado</th>
-                        <th className="text-right p-4">Saldo</th>
+                        <th className="text-right p-4">Orçado em Janeiro</th>
+                        <th className="text-right p-4">Orçado em {months[selectedMonth].label}</th>
                         <th className="text-right p-4">Receita</th>
                       </tr>
                     </thead>

@@ -3,6 +3,7 @@ import { agregadorFonteRecurso } from '../app/protected/dashboard/agregadores';
 // Tipos
 export interface DadoHistoricoAgregado {
   elemento_despesa: string;
+  fonte_recurso: string;
   ano: number;
   mes: number;
   empenhado: number;
@@ -175,22 +176,22 @@ export interface DadoHistoricoReceitaAgregado {
   ): DadoHistoricoAgregado[] {
     const historicoProcessado: DadoHistoricoAgregado[] = [];
     
-    // Get unique years from the data, filtering out years >= selectedYear
+    // Obter anos disponíveis
     const anosDisponiveis = Array.from(new Set(dados.map(d => Number(d.ano))))
       .filter(ano => ano <= selectedYear)
       .sort((a, b) => b - a);
 
     console.log('Anos disponíveis:', anosDisponiveis);
-    // Process each available year
-    for (const ano of anosDisponiveis) {
 
+    for (const ano of anosDisponiveis) {
       const dadosAno = dados.filter((d) => Number(d.ano) === ano);
       console.log('Dados do ano:', dadosAno);
       if (dadosAno.length > 0) {
-        // Mapear todos os dados para suas categorias
+        // Mapear todos os dados para suas categorias e fontes de recurso
         const dadosComCategoria = dadosAno.map((d) => ({
           ...d,
-          categoria_economica: agregadorElementoDespesa[d.elemento_despesa] || 'Outros'
+          categoria_economica: agregadorElementoDespesa[d.elemento_despesa] || 'Outros',
+          fonte_recurso: agregadorFonteRecurso[d.fonte_recurso] || 'Outros',
         }));
         
         const categorias = Array.from(new Set(dadosComCategoria.map(d => d.categoria_economica)));
@@ -200,12 +201,14 @@ export interface DadoHistoricoReceitaAgregado {
             const dadosMes = dadosComCategoria
               .filter(d => d.categoria_economica === categoria && d.mes === mes);
             
-            
             const empenhadoMes = dadosMes
               .reduce((sum, d) => sum + (d.empenhado || 0), 0);
+            
+            const fonteRecurso = dadosMes[0]?.fonte_recurso || 'Não Classificado';
 
             historicoProcessado.push({
               elemento_despesa: categoria,
+              fonte_recurso: fonteRecurso,
               ano,
               mes,
               empenhado: empenhadoMes,
@@ -215,7 +218,6 @@ export interface DadoHistoricoReceitaAgregado {
       }
     }
 
-    console.log('Histórico Processado Final:', historicoProcessado);
     return historicoProcessado;
   }
 
