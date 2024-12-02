@@ -29,7 +29,6 @@ const ReceitasGraph: React.FC<ReceitasGraphProps> = ({ dadosHistoricosReceitas }
     
     // Skip if we've already processed this combination
     if (processedEntries.has(entryKey)) {
-      console.warn(`Duplicate entry found for ${entryKey}`);
       return;
     }
     

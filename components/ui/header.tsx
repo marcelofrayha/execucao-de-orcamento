@@ -37,8 +37,8 @@ export function DashboardHeader({
       </div>
       
       <div className="grid gap-4 md:grid-cols-3">
-        <FuturisticCard title="Orçamento Atual">
-          <p className="text-sm font-medium text-muted-foreground">Orçamento Atual</p>
+        <FuturisticCard title="Despesa Orçada">
+          <p className="text-sm font-medium text-muted-foreground">Orçamento em {mes}</p>
           <p className="text-2xl font-bold">
             {totalSaldo.toLocaleString('pt-BR', { 
               style: 'currency', 
@@ -48,7 +48,7 @@ export function DashboardHeader({
           </p>
         </FuturisticCard>
         
-        <FuturisticCard title="Total Empenhado">
+        <FuturisticCard title="Despesa Empenhada">
           <p className="text-sm font-medium text-muted-foreground">Despesas até {mes}</p>
           <p className="text-2xl font-bold">
             {totalEmpenhado.toLocaleString('pt-BR', { 
@@ -59,7 +59,7 @@ export function DashboardHeader({
           </p>
         </FuturisticCard>
 
-        <FuturisticCard title="Projeção Orçamento">
+        <FuturisticCard title="Projeção da Despesa">
           <p className="text-sm font-medium text-muted-foreground">Despesas até Dezembro de {ano}</p>
           <div className="space-y-1">
             <p className="text-2xl font-bold">
@@ -77,7 +77,7 @@ export function DashboardHeader({
         </FuturisticCard>
 
         <FuturisticCard title="Receita Orçada">
-          <p className="text-sm font-medium text-muted-foreground">Receita Orçada</p>
+          <p className="text-sm font-medium text-muted-foreground">Receita Orçada em {mes}</p>
           <p className="text-2xl font-bold">
             {saldoReceita.toLocaleString('pt-BR', { 
               style: 'currency', 
@@ -87,7 +87,7 @@ export function DashboardHeader({
           </p>
         </FuturisticCard>
 
-        <FuturisticCard title="Receita Até o Mês">
+        <FuturisticCard title="Receita Empenhada">
           <p className="text-sm font-medium text-muted-foreground">Receita até {mes}</p>
           <p className="text-2xl font-bold">
             {receitaMes.toLocaleString('pt-BR', { 
@@ -98,7 +98,7 @@ export function DashboardHeader({
           </p>
         </FuturisticCard>
 
-        <FuturisticCard title="Projeção Receita">
+        <FuturisticCard title="Projeção da Receita">
           <p className="text-sm font-medium text-muted-foreground">Receita até Dezembro de {ano}</p>
           <div className="space-y-1">
             <p className="text-2xl font-bold">
