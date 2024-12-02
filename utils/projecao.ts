@@ -2,10 +2,10 @@ import { agregadorElementoDespesa } from '../app/protected/dashboard/agregadores
 import { agregadorFonteRecurso } from '../app/protected/dashboard/agregadores';
 // Tipos
 export interface DadoHistoricoAgregado {
-  categoria_economica: string;
+  elemento_despesa: string;
   ano: number;
   mes: number;
-  empenhado_mes: number;
+  empenhado: number;
 }
 
 export interface DadoHistoricoReceitaAgregado {
@@ -58,7 +58,7 @@ export interface DadoHistoricoReceitaAgregado {
     console.log('Current Spending:', empenhoAtual);
     console.log('Current Balance:', saldoAtual);
 
-    const categorias = Array.from(new Set(dadosHistoricos.map((d) => d.categoria_economica)));
+    const categorias = Array.from(new Set(dadosHistoricos.map((d) => d.elemento_despesa)));
     console.log('Categories:', categorias);
     
     let somaPesos = 0;
@@ -67,7 +67,7 @@ export interface DadoHistoricoReceitaAgregado {
     categorias.forEach((categoria) => {
       console.log('\n=== Processing Category:', categoria, '===');
       const dadosCategoria = dadosHistoricos.filter(
-        (d) => d.categoria_economica === categoria
+        (d) => d.elemento_despesa === categoria
       );
       
       const anosDisponiveis = Array.from(new Set(dadosCategoria.map(d => d.ano)))
@@ -79,8 +79,8 @@ export interface DadoHistoricoReceitaAgregado {
         const peso = PESOS_ANOS[index] || 0;
         const dadosAno = dadosCategoria.filter(d => d.ano === ano);
         
-        const empenhoMes = dadosAno.find(d => d.mes === mesAtual)?.empenhado_mes || 0;
-        const empenhoDezembro = dadosAno.find(d => d.mes === 12)?.empenhado_mes || 0;
+        const empenhoMes = dadosAno.find(d => d.mes === mesAtual)?.empenhado || 0;
+        const empenhoDezembro = dadosAno.find(d => d.mes === 12)?.empenhado || 0;
 
         console.log(`Year ${ano}:`);
         console.log(`- Weight: ${peso}`);
@@ -111,11 +111,11 @@ export interface DadoHistoricoReceitaAgregado {
       
       const empenhoMesTotal = dadosAno
         .filter(d => d.mes === mesAtual)
-        .reduce((sum, d) => sum + d.empenhado_mes, 0);
+        .reduce((sum, d) => sum + d.empenhado, 0);
           
       const empenhoDezembroTotal = dadosAno
         .filter(d => d.mes === 12)
-        .reduce((sum, d) => sum + d.empenhado_mes, 0);
+        .reduce((sum, d) => sum + d.empenhado, 0);
 
       if (empenhoMesTotal > 0 && empenhoDezembroTotal > 0) {
         const proporcao = empenhoMesTotal / empenhoDezembroTotal;
@@ -205,10 +205,10 @@ export interface DadoHistoricoReceitaAgregado {
               .reduce((sum, d) => sum + (d.empenhado || 0), 0);
 
             historicoProcessado.push({
-              categoria_economica: categoria,
+              elemento_despesa: categoria,
               ano,
               mes,
-              empenhado_mes: empenhadoMes,
+              empenhado: empenhadoMes,
             });
           }
         }

@@ -49,7 +49,7 @@ export function DashboardHeader({
         </FuturisticCard>
         
         <FuturisticCard title="Total Empenhado">
-          <p className="text-sm font-medium text-muted-foreground">Total Empenhado</p>
+          <p className="text-sm font-medium text-muted-foreground">Despesas até {mes}</p>
           <p className="text-2xl font-bold">
             {totalEmpenhado.toLocaleString('pt-BR', { 
               style: 'currency', 
@@ -60,7 +60,7 @@ export function DashboardHeader({
         </FuturisticCard>
 
         <FuturisticCard title="Projeção Orçamento">
-          <p className="text-sm font-medium text-muted-foreground">Projeção Orçamento</p>
+          <p className="text-sm font-medium text-muted-foreground">Despesas até Dezembro de {ano}</p>
           <div className="space-y-1">
             <p className="text-2xl font-bold">
               {projecaoFinalAno.toLocaleString('pt-BR', { 
@@ -76,8 +76,8 @@ export function DashboardHeader({
           </div>
         </FuturisticCard>
 
-        <FuturisticCard title="Saldo Receita">
-          <p className="text-sm font-medium text-muted-foreground">Saldo Receita</p>
+        <FuturisticCard title="Receita Orçada">
+          <p className="text-sm font-medium text-muted-foreground">Receita Orçada</p>
           <p className="text-2xl font-bold">
             {saldoReceita.toLocaleString('pt-BR', { 
               style: 'currency', 
@@ -87,8 +87,8 @@ export function DashboardHeader({
           </p>
         </FuturisticCard>
 
-        <FuturisticCard title="Receita do Mês">
-          <p className="text-sm font-medium text-muted-foreground">Receita {mes}</p>
+        <FuturisticCard title="Receita Até o Mês">
+          <p className="text-sm font-medium text-muted-foreground">Receita até {mes}</p>
           <p className="text-2xl font-bold">
             {receitaMes.toLocaleString('pt-BR', { 
               style: 'currency', 
@@ -99,19 +99,24 @@ export function DashboardHeader({
         </FuturisticCard>
 
         <FuturisticCard title="Projeção Receita">
-          <p className="text-sm font-medium text-muted-foreground">Projeção Receita</p>
+          <p className="text-sm font-medium text-muted-foreground">Receita até Dezembro de {ano}</p>
           <div className="space-y-1">
             <p className="text-2xl font-bold">
-              {projecaoReceita.toLocaleString('pt-BR', { 
-                style: 'currency', 
-                currency: 'BRL',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-              })}
+              {projecaoReceita === 0 
+                ? "Inclua Mais Dados"
+                : projecaoReceita.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  })
+              }
             </p>
-            <p className="text-lg font-medium">
-              {percentualReceitaProjetada.toFixed(1)}%
-            </p>
+            {percentualReceitaProjetada !== 0 && (
+              <p className="text-lg font-medium">
+                {percentualReceitaProjetada.toFixed(1)}%
+              </p>
+            )}
           </div>
         </FuturisticCard>
       </div>

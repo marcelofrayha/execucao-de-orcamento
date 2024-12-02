@@ -18,27 +18,27 @@ interface ReceitasGraphProps {
 }
 
 const ReceitasGraph: React.FC<ReceitasGraphProps> = ({ dadosHistoricosReceitas }) => {
-  // Aggregate data
+  // Create a unique key for each entry to check for duplicates
+  const processedEntries = new Set();
   const dataMap: { [key: string]: { [key: string]: number } } = {};
-
-  // Debug log
-  console.log('Raw data:', dadosHistoricosReceitas);
 
   dadosHistoricosReceitas.forEach((dado) => {
     const { ano, mes, fonte_recurso, receita_mes } = dado;
     const anoMes = `${ano}-${mes.toString().padStart(2, '0')}`;
+    const entryKey = `${fonte_recurso}-${anoMes}`;
     
-    // Initialize if needed
+    // Skip if we've already processed this combination
+    if (processedEntries.has(entryKey)) {
+      console.warn(`Duplicate entry found for ${entryKey}`);
+      return;
+    }
+    
     if (!dataMap[fonte_recurso]) {
       dataMap[fonte_recurso] = {};
     }
-    
-    // Ensure we're not adding to an existing value
     dataMap[fonte_recurso][anoMes] = receita_mes;
+    processedEntries.add(entryKey);
   });
-
-  // Debug log
-  console.log('Processed data:', dataMap);
 
   const fontes = Object.keys(dataMap);
   const meses = Array.from(
@@ -50,9 +50,6 @@ const ReceitasGraph: React.FC<ReceitasGraphProps> = ({ dadosHistoricosReceitas }
     data: meses.map((mes) => dataMap[fonte][mes] || 0),
     backgroundColor: `rgba(${(index * 50) % 255}, ${(index * 80) % 255}, ${(index * 110) % 255}, 0.5)`,
   }));
-
-  // Debug log
-  console.log('Final datasets:', datasets);
 
   const data = {
     labels: meses,

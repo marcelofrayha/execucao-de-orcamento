@@ -105,6 +105,64 @@ async function fetchAllDespesas(supabase: any, user_id: string, month: number) {
   return allData;
 }
 
+async function fetchHistoricalDespesas(supabase: any, user_id: string, selectedYear: number) {
+  let allData: any[] = [];
+  let hasMore = true;
+  let page = 0;
+  
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('Despesas')
+      .select('*')
+      .eq('user_id', user_id)
+      .lte('ano', selectedYear)
+      .range(page * 1000, (page + 1) * 1000 - 1);
+      
+    if (error) {
+      console.error('Error fetching historical despesas:', error);
+      throw error;
+    }
+    
+    console.log(`Fetched page ${page} of historical despesas:`, {
+      records: data?.length,
+      sampleData: data?.slice(0, 2)
+    });
+    
+    allData = [...allData, ...data];
+    hasMore = data.length === 1000;
+    page++;
+  }
+  
+  console.log('Total historical despesas fetched:', allData.length);
+  return allData;
+}
+
+async function fetchHistoricalReceitas(supabase: any, user_id: string, selectedYear: number) {
+  let allData: any[] = [];
+  let hasMore = true;
+  let page = 0;
+  
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('Receitas')
+      .select('*')
+      .eq('user_id', user_id)
+      .lte('ano', selectedYear)
+      .range(page * 1000, (page + 1) * 1000 - 1);
+      
+    if (error) {
+      console.error('Error fetching historical receitas:', error);
+      throw error;
+    }
+    
+    allData = [...allData, ...data];
+    hasMore = data.length === 1000;
+    page++;
+  }
+  
+  return allData;
+}
+
 interface CollapsibleSectionProps {
   title: string;
   children: React.ReactNode;
@@ -154,6 +212,7 @@ function DashboardContent() {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear)
   const [dadosHistoricos, setDadosHistoricos] = useState<DadoHistoricoAgregado[]>([])
   const [dadosHistoricosReceitas, setDadosHistoricosReceitas] = useState<DadoHistoricoReceitaAgregado[]>([])
+  const [historicalDespesas, setHistoricalDespesas] = useState<any[]>([]);
   
   // New state variables for separate collapsibles
   const [showDespesasDetails, setShowDespesasDetails] = useState(false)
@@ -229,33 +288,29 @@ function DashboardContent() {
 
   useEffect(() => {
     async function fetchData() {
-      // Ensure selectedMonth is a valid integer
-      const parsedSelectedMonth = Number(selectedMonth)
-      if (isNaN(parsedSelectedMonth)) {
-        setError('Invalid month selected.')
-        setLoading(false)
-        return
-      }
-
-
-      if (!user_id) {
-        setError('No user ID provided')
-        setLoading(false)
-        return
-      }
-
+      if (!user_id) return;
+      
       try {
-        const supabase = createClient(
-        )
-
-        // // First fetch all available years
-        // const { data: rawYearsData, error: yearsError } = await supabase
-        //   .from('Despesas')
-        //   .select('ano')
-        //   .eq('user_id', user_id)
-
-        // if (yearsError) throw new Error(`Error fetching years: ${yearsError.message}`)
+        setLoading(true);
+        const supabase = createClient();
         
+        // Fetch historical data for the graph
+        const historicalData = await fetchHistoricalDespesas(supabase, user_id, selectedYear);
+        console.log('Setting historical despesas:', {
+          total: historicalData.length,
+          years: Array.from(new Set(historicalData.map(d => d.ano))),
+          months: Array.from(new Set(historicalData.map(d => d.mes))).sort()
+        });
+        setHistoricalDespesas(historicalData);
+        
+        // Ensure selectedMonth is a valid integer
+        const parsedSelectedMonth = Number(selectedMonth)
+        if (isNaN(parsedSelectedMonth)) {
+          setError('Invalid month selected.')
+          setLoading(false)
+          return
+        }
+
         // Then use these years in the main query
         const [despesasData, despesas12Data, receitasData, receitasHistoricas] = await Promise.all([
           fetchAllDespesas(supabase, user_id, selectedMonth),
@@ -267,17 +322,12 @@ function DashboardContent() {
             .eq('mes', Number(selectedMonth))
             .eq('ano', Number(selectedYear))
             .range(0, 999),
-          supabase
-            .from('Receitas')
-            .select('*')
-            .eq('user_id', user_id)
-            .lte('ano', Number(selectedYear))
-            .range(0, 999),
+          fetchHistoricalReceitas(supabase, user_id, selectedYear)
         ]);
 
         console.log('DEBUG - Raw Receitas Data:', {
           currentMonth: receitasData.data,
-          historical: receitasHistoricas.data
+          historical: receitasHistoricas
         });
 
         const processedDespesas = despesasData || [];
@@ -429,27 +479,27 @@ function DashboardContent() {
 
         // Process historical data
         const dadosAgregados = processarDadosHistoricos(combinedDespesas, selectedYear);
-        console.log('Dados Historicos:', combinedDespesas)
+        console.log('Dados Historicos:', dadosAgregados)
         setDadosHistoricos(dadosAgregados);
 
         // Process historical revenue data
-        const dadosHistoricosReceitasProcessados = processarDadosHistoricosReceitas(receitasHistoricas.data || [], selectedYear);
+        const dadosHistoricosReceitasProcessados = processarDadosHistoricosReceitas(receitasHistoricas || [], selectedYear);
         console.log('DEBUG - Processed Historical Receitas:', {
-          before: receitasHistoricas.data,
+          before: receitasHistoricas,
           after: dadosHistoricosReceitasProcessados
         });
         setDadosHistoricosReceitas(dadosHistoricosReceitasProcessados);
 
-      } catch (err) {
-        console.error('Error fetching data:', err)
-        setError(err instanceof Error ? err.message : 'An error occurred')
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError(error instanceof Error ? error.message : 'An error occurred');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchData()
-  }, [user_id, selectedMonth, selectedYear])
+    fetchData();
+  }, [user_id, selectedMonth, selectedYear]);
 
   if (error) {
     return (
@@ -573,7 +623,7 @@ function DashboardContent() {
             <h2 className="text-3xl font-bold tracking-tight mb-8 bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">
               Histórico de Despesas
             </h2>
-            <DespesasGraph dadosHistoricos={dadosHistoricos} />
+            <DespesasGraph dadosHistoricos={historicalDespesas} />
           </div>
 
           {/* Receitas Graph */}

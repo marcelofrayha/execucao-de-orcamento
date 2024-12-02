@@ -213,7 +213,7 @@ function processReceitasTable(data: any[][], month: number, year: number, minCol
 
     // Filter and rearrange the data
     const processedData = data.slice(1)
-        .filter(row => row[columnIndices.descricao])
+        .filter(row => row[columnIndices.fonteRecurso])
         .map(row => [
             row[columnIndices.descricao],
             row[columnIndices.fonteRecurso],
