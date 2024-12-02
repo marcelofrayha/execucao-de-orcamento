@@ -37,11 +37,11 @@ export interface DadoHistoricoReceitaAgregado {
 
   // Constantes
   const PESOS_ANOS: { [key: number]: number } = {
-    0: 0.40, // Ano anterior (maior peso)
+    0: 0.30, // Ano anterior (maior peso)
     1: 0.25, // 2 anos atrás
     2: 0.20, // 3 anos atrás
-    3: 0.10, // 4 anos atrás
-    4: 0.05, // 5 anos atrás (menor peso)
+    3: 0.15, // 4 anos atrás
+    4: 0.10, // 5 anos atrás (menor peso)
   };
   
 

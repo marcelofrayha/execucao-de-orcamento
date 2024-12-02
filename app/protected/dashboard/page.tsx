@@ -14,6 +14,7 @@ import { DashboardHeader } from '@/components/ui/header'
 // Import Graph Components
 import DespesasGraph from './components/DespesasGraph'
 import ReceitasGraph from './components/ReceitasGraph'
+import { ProjecaoExplanation } from '@/components/ProjecaoExplanation';
 
 interface ValoresAgregados {
     total_orcado: number
@@ -544,7 +545,7 @@ function DashboardContent() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-12">
+    <div className="container mx-auto px-2 py-8 space-y-12">
       {/* Top Actions Row */}
       <div className="flex justify-between items-center">
         <div className="flex justify-center gap-4 p-4 bg-muted/50 rounded-lg">
@@ -604,6 +605,10 @@ function DashboardContent() {
 
       {/* Main content sections */}
       <div className="space-y-16">
+        {/* Projection Explanation */}
+        <div className="bg-card rounded-lg shadow-sm">
+          <ProjecaoExplanation selectedYear={selectedYear} />
+        </div>
 
         {/* Graphical Representations */}
         <div className="space-y-16">
@@ -623,6 +628,7 @@ function DashboardContent() {
             <ReceitasGraph dadosHistoricosReceitas={dadosHistoricosReceitas} />
           </div>
         </div>
+
 
         {/* Projection Table */}
         <div className="bg-card rounded-lg shadow-sm">
