@@ -214,10 +214,6 @@ function DashboardContent() {
   const [dadosHistoricosReceitas, setDadosHistoricosReceitas] = useState<DadoHistoricoReceitaAgregado[]>([])
   const [historicalDespesas, setHistoricalDespesas] = useState<any[]>([]);
   
-  // New state variables for separate collapsibles
-  const [showDespesasDetails, setShowDespesasDetails] = useState(false)
-  const [showReceitasDetails, setShowReceitasDetails] = useState(false)
-
   const searchParams = useSearchParams()
   const router = useRouter()
   const user_id = searchParams.get('user_id')
@@ -608,13 +604,6 @@ function DashboardContent() {
 
       {/* Main content sections */}
       <div className="space-y-16">
-        {/* Projection Table */}
-        <div className="bg-card rounded-lg shadow-sm">
-          <TabelaProjecao 
-            dados={dadosProjecao} 
-            selectedMonth={selectedMonth} 
-          />
-        </div>
 
         {/* Graphical Representations */}
         <div className="space-y-16">
@@ -635,6 +624,13 @@ function DashboardContent() {
           </div>
         </div>
 
+        {/* Projection Table */}
+        <div className="bg-card rounded-lg shadow-sm">
+          <TabelaProjecao 
+            dados={dadosProjecao} 
+            selectedMonth={selectedMonth} 
+          />
+        </div>
         {/* Collapsible Details Sections */}
         <div className="space-y-4">
           {/* Despesas Collapsible */}
@@ -653,32 +649,34 @@ function DashboardContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {despesasPorUnidade.map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-muted/50">
-                        <td className="p-4">{item.unidade_orcamentaria}</td>
-                        <td className="text-right p-4">
-                          {item.valores.total_orcado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {item.valores.total_saldo.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {item.valores.total_empenhado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                      </tr>
-                    ))}
+                    {despesasPorUnidade
+                      .filter(item => item.valores.total_saldo !== 0)
+                      .map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-muted/50">
+                          <td className="p-4">{item.unidade_orcamentaria}</td>
+                          <td className="text-right p-4">
+                            {item.valores.total_orcado.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                        </tr>
+                      ))}
                     <tr className="border-t font-bold bg-muted/50">
                       <td className="p-4">Total</td>
                       <td className="text-right p-4">
@@ -722,32 +720,34 @@ function DashboardContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {despesasPorFonte.map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-muted/50">
-                        <td className="p-4">{item.fonte_de_recurso}</td>
-                        <td className="text-right p-4">
-                          {item.valores.total_orcado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {item.valores.total_saldo.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {item.valores.total_empenhado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                      </tr>
-                    ))}
+                    {despesasPorFonte
+                      .filter(item => item.valores.total_saldo !== 0)
+                      .map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-muted/50">
+                          <td className="p-4">{item.fonte_de_recurso}</td>
+                          <td className="text-right p-4">
+                            {item.valores.total_orcado.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                        </tr>
+                      ))}
                     <tr className="border-t font-bold bg-muted/50">
                       <td className="p-4">Total</td>
                       <td className="text-right p-4">
@@ -791,32 +791,34 @@ function DashboardContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {despesasPorElemento.map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-muted/50">
-                        <td className="p-4">{item.elemento_despesa}</td>
-                        <td className="text-right p-4">
-                          {item.valores.total_orcado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {item.valores.total_saldo.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                        <td className="text-right p-4">
-                          {item.valores.total_empenhado.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0
-                          })}
-                        </td>
-                      </tr>
-                    ))}
+                    {despesasPorElemento
+                      .filter(item => item.valores.total_saldo !== 0)
+                      .map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-muted/50">
+                          <td className="p-4">{item.elemento_despesa}</td>
+                          <td className="text-right p-4">
+                            {item.valores.total_orcado.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {item.valores.total_saldo.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                          <td className="text-right p-4">
+                            {item.valores.total_empenhado.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL',
+                              minimumFractionDigits: 0
+                            })}
+                          </td>
+                        </tr>
+                      ))}
                     <tr className="border-t font-bold bg-muted/50">
                       <td className="p-4">Total</td>
                       <td className="text-right p-4">
