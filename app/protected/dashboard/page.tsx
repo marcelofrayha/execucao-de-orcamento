@@ -449,16 +449,28 @@ function DashboardContent() {
                unidade_orcamentaria: unidade,
                valores
              }))
-             .sort((a, b) => b.valores.total_orcado - a.valores.total_orcado)
+             .sort((a, b) => b.valores.total_empenhado - a.valores.total_empenhado)
          )
+         setDespesasPorUnidadeFonte(
+          Array.from(unidadeMap.entries())
+            .map(([unidade, valores]) => ({
+              unidade_fonte: unidade,
+              valores
+            }))
+            .sort((a, b) => b.valores.total_empenhado - a.valores.total_empenhado)
+        )
          setDespesasPorFonte(Array.from(fonteMap.entries()).map(([fonte, valores]) => ({
            fonte_de_recurso: fonte,
            valores
-         })))
+         }))
+         .sort((a, b) => b.valores.total_empenhado - a.valores.total_empenhado)
+        )
          setDespesasPorElemento(Array.from(elementoMap.entries()).map(([elemento, valores]) => ({
            elemento_despesa: elemento,
            valores
-         })))
+         }))
+         .sort((a, b) => b.valores.total_empenhado - a.valores.total_empenhado)
+        )
          setReceitasPorDescricao(
            Array.from(descricaoMap.entries())
              .map(([descricao, valores]) => ({
@@ -467,7 +479,7 @@ function DashboardContent() {
                total_saldo: valores.total_saldo,
                total_receita: valores.total_receita
              }))
-             .sort((a, b) => b.total_orcado - a.total_orcado)
+             .sort((a, b) => b.total_receita - a.total_receita)
          )
          setReceitasPorFonte(
            Array.from(receitaFonteMap.entries())
@@ -477,7 +489,7 @@ function DashboardContent() {
                total_saldo: valores.total_saldo,
                total_receita: valores.total_receita
              }))
-             .sort((a, b) => b.total_orcado - a.total_orcado)
+             .sort((a, b) => b.total_receita - a.total_receita)
          )
 
         // Process historical data
@@ -516,6 +528,13 @@ function DashboardContent() {
         });
 
         // Transformar o Map em um array para renderização
+        setDespesasPorUnidade(
+          Array.from(unidadeFonteMap.entries()).map(([chave, valores]) => ({
+            unidade_orcamentaria: chave,
+            valores
+          }))
+        );
+
         setDespesasPorUnidadeFonte(
           Array.from(unidadeFonteMap.entries()).map(([chave, valores]) => ({
             unidade_fonte: chave,
