@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState, Suspense, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { agregadorUnidadeOrcamentaria, agregadorFonteRecurso, agregadorElementoDespesa } from './agregadores'
+import { agregadorUnidadeOrcamentaria, agregadorFonteRecurso, agregadorElementoDespesa, agregadorDescricaoReceita } from './agregadores'
 import { calcularProjecaoEmpenho, calcularProjecaoReceita, processarDadosHistoricos, DadoHistoricoAgregado, DadoHistoricoReceitaAgregado, processarDadosHistoricosReceitas } from '@/utils/projecao';
 import { TabelaProjecao } from './tabela-projecao';
 import { Button } from '@/components/ui/button'
@@ -523,6 +523,23 @@ function DashboardContent() {
           }))
         );
 
+        // Definir um array de classes de cores disponíveis
+        const colorClasses = [
+          'bg-white',
+          'bg-gray-100',
+        ];
+
+        // Criar um mapeamento de Unidade Orçamentária para Classe de Cor
+        const unidadeToColorMap: { [unidade: string]: string } = {};
+
+        despesasPorUnidadeFonte.forEach((item, index) => {
+          const [unidade, fonte] = item.unidade_fonte.split(' - ');
+          if (!unidadeToColorMap[unidade]) {
+            // Alternar entre as duas cores com base no índice da unidade
+            unidadeToColorMap[unidade] = colorClasses[Object.keys(unidadeToColorMap).length % colorClasses.length];
+          }
+        });
+
       } catch (error) {
         console.error('Error fetching data:', error);
         setError(error instanceof Error ? error.message : 'An error occurred');
@@ -579,6 +596,23 @@ function DashboardContent() {
     projecaoReceita: receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAnoReceita || 0), 0),
     percentualReceitaProjetada: receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.percentualReceitaExecutado || 0), 0) / receitasPorFonteComProjecao.length
   };
+
+  // Definir um array de classes de cores disponíveis
+  const colorClasses = [
+    'bg-gray-100',
+    'bg-white',
+  ];
+
+  // Criar um mapeamento de Unidade Orçamentária para Classe de Cor
+  const unidadeToColorMap: { [unidade: string]: string } = {};
+
+  despesasPorUnidadeFonte.forEach((item, index) => {
+    const [unidade, fonte] = item.unidade_fonte.split(' - ');
+    if (!unidadeToColorMap[unidade]) {
+      // Alternar entre as duas cores com base no índice da unidade
+      unidadeToColorMap[unidade] = colorClasses[Object.keys(unidadeToColorMap).length % colorClasses.length];
+    }
+  });
 
   return (
     <div className="container mx-auto px-2 py-8 space-y-12">
@@ -696,8 +730,13 @@ function DashboardContent() {
                       .filter(item => item.valores.total_saldo !== 0)
                       .map((item, index) => {
                         const [unidade, fonte] = item.unidade_fonte.split(' - ');
+                        const rowColor = unidadeToColorMap[unidade] || 'bg-white'; // Classe de cor ou branco padrão
+
                         return (
-                          <tr key={index} className="border-b hover:bg-muted/50">
+                          <tr
+                            key={index}
+                            className={`border-b hover:bg-muted/50 ${rowColor}`}
+                          >
                             <td className="p-4">{unidade}</td>
                             <td className="p-4">{fonte}</td>
                             <td className="text-right p-4">
@@ -1010,7 +1049,7 @@ function DashboardContent() {
                     <tbody>
                       {receitasPorDescricao.map((item, index) => (
                         <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="p-4">{item.descricao}</td>
+                          <td className="p-4">{agregadorDescricaoReceita[item.descricao] || item.descricao}</td>
                           <td className="text-right p-4">
                             {item.total_orcado.toLocaleString('pt-BR', { 
                               style: 'currency', 

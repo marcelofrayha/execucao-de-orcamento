@@ -13,7 +13,7 @@ export function ProjecaoExplanation({ selectedYear }: ProjecaoExplanationProps) 
 
   return (
     <div className="bg-card rounded-lg p-6 space-y-4">
-      <h3 className="text-lg font-semibold">Metodologia de Projeção</h3>
+      <h3 className="text-lg font-semibold">Metodologia da Projeção</h3>
       
       <p className="text-muted-foreground">
         As projeções são calculadas utilizando um modelo de média ponderada histórica, 

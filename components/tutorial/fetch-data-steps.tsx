@@ -352,7 +352,6 @@ async function uploadDataToSupabase(data: any[], user_id: string, tableType: 'De
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      autoRefreshToken: true,
       persistSession: true,
     },
   });
