@@ -17,7 +17,7 @@ export default async function ProtectedPage() {
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col gap-12">
+    <div className="flex-1 flex flex-col gap-12 px-4 py-10 max-w-5xl mx-auto">
       <Link
         href={`/protected/dashboard?user_id=${user.id}`}
         className="flex justify-center"

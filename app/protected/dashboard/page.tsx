@@ -201,6 +201,13 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, children
   )
 }
 
+interface Profile {
+  user_id: string;
+  nome: string;
+  municipio: string;
+  estado: string;
+}
+
 function DashboardContent() {
   const [despesasPorUnidade, setDespesasPorUnidade] = useState<DespesasPorUnidade[]>([])
   const [despesasPorFonte, setDespesasPorFonte] = useState<DespesasPorFonte[]>([])
@@ -215,6 +222,7 @@ function DashboardContent() {
   const [dadosHistoricosReceitas, setDadosHistoricosReceitas] = useState<DadoHistoricoReceitaAgregado[]>([])
   const [historicalDespesas, setHistoricalDespesas] = useState<any[]>([]);
   const [despesasPorUnidadeFonte, setDespesasPorUnidadeFonte] = useState<Array<{ unidade_fonte: string, valores: ValoresAgregados }>>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -291,11 +299,48 @@ function DashboardContent() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!user_id) return;
+      if (!user_id) {
+        setError('ID de usuário não fornecido.');
+        return;
+      }
       
       try {
         setLoading(true);
         const supabase = createClient();
+        
+        // Buscar o usuário autenticado
+        const { data: session, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError || !session.session?.user) {
+          setError('Usuário não autenticado.');
+          router.push('/sign-in');
+          return;
+        }
+
+        const authenticatedUserId = session.session.user.id;
+
+        // Verificar se o user_id na URL corresponde ao usuário autenticado
+        if (authenticatedUserId !== user_id) {
+          setError('Usuário não autorizado para acessar este dashboard.');
+          router.push('/sign-in');
+          return;
+        }
+
+        // Buscar o perfil
+        const { data: profileData, error: profileError } = await supabase
+          .from('municipios')
+          .select('*')
+          .eq('user_id', user_id)
+          .single();
+
+        if (profileError) {
+          console.error('Erro ao buscar perfil:', profileError.message);
+          // Redirecionar para inicialização do perfil se não existir
+          router.push(`/initialize-profile?user_id=${user_id}`);
+          return;
+        } else {
+          setProfile(profileData);
+        }
         
         // Fetch historical data for the graph
         const historicalData = await fetchHistoricalDespesas(supabase, user_id, selectedYear);
@@ -544,8 +589,8 @@ function DashboardContent() {
 
         // Definir um array de classes de cores disponíveis
         const colorClasses = [
-          'bg-white',
-          'bg-gray-100',
+          'bg-white dark:bg-gray-800',
+          'bg-gray-100 dark:bg-gray-700',
         ];
 
         // Criar um mapeamento de Unidade Orçamentária para Classe de Cor
@@ -558,6 +603,8 @@ function DashboardContent() {
             unidadeToColorMap[unidade] = colorClasses[Object.keys(unidadeToColorMap).length % colorClasses.length];
           }
         });
+
+        setLoading(false);
 
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -618,8 +665,8 @@ function DashboardContent() {
 
   // Definir um array de classes de cores disponíveis
   const colorClasses = [
-    'bg-gray-100',
-    'bg-white',
+    'bg-gray-100 dark:bg-gray-900',
+    'bg-white dark:bg-black',
   ];
 
   // Criar um mapeamento de Unidade Orçamentária para Classe de Cor
@@ -633,10 +680,19 @@ function DashboardContent() {
     }
   });
 
+  if (loading) {
+    return <p>Carregando perfil...</p>;
+  }
+
+  if (!profile) {
+    return <p>Perfil não encontrado.</p>;
+  }
+
   return (
-    <div className="container mx-auto px-2 py-8 space-y-12">
+    <div className="flex-1 flex flex-col gap-12 px-4 py-10 max-w-5xl mx-auto">
       {/* Top Actions Row */}
       <div className="flex justify-between items-center">
+        <p className="text-lg font-semibold">Dados de {profile.municipio}-{profile.estado}</p>
         <div className="flex justify-center gap-4 p-4 bg-muted/50 rounded-lg">
           <div className="space-y-2">
             <h2 className="text-sm font-medium text-center">Ano</h2>
@@ -736,7 +792,7 @@ function DashboardContent() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
+                    <tr className="border-b dark:border-gray-700">
                       <th className="text-left p-4">Unidade Orçamentária</th>
                       <th className="text-left p-4">Fonte de Recurso</th>
                       <th className="text-right p-4">Orçado em Janeiro</th>
@@ -1127,7 +1183,6 @@ function DashboardContent() {
     </div>
   );
 }
-
 // Componente wrapper com Suspense
 export default function Dashboard() {
   return (
@@ -1136,3 +1191,4 @@ export default function Dashboard() {
     </Suspense>
   )
 }
+

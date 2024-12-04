@@ -37,6 +37,9 @@ export default async function Signup(props: {
             name="password"
             placeholder="Sua senha"
             minLength={6}
+            maxLength={100}
+            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+            title="A senha deve conter pelo menos 8 caracteres, uma letra maiúscula, uma letra minúscula, um número e um caractere especial."
             required
           />
           <SubmitButton formAction={signUpAction} pendingText="Cadastrando...">

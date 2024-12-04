@@ -2,9 +2,6 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  // The `/auth/callback` route is required for the server-side auth flow implemented
-  // by the SSR package. It exchanges an auth code for the user's session.
-  // https://supabase.com/docs/guides/auth/server-side/nextjs
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const origin = requestUrl.origin;
@@ -12,13 +9,25 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      // console.error('Auth Callback Error:', error.message);
+      // Redirecionar para sign-in com mensagem de erro
+      return NextResponse.redirect(`${origin}/sign-in?error=${encodeURIComponent(error.message)}`);
+    }
+
+    // Recuperar User ID após troca de código por sessão
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.redirect(`${origin}/sign-in?error=${encodeURIComponent('Autenticação falhou.')}`);
+    }
+
+    // Redirecionar para a página de inicialização do perfil
+    return NextResponse.redirect(`${origin}/initialize-profile?user_id=${user.id}`);
   }
 
-  if (redirectTo) {
-    return NextResponse.redirect(`${origin}${redirectTo}`);
-  }
-
-  // URL to redirect to after sign up process completes
+  // URL para redirecionar após o processo de confirmação de signup
   return NextResponse.redirect(`${origin}/protected`);
 }

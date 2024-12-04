@@ -29,7 +29,7 @@ export const signUpAction = async (formData: FormData) => {
   } else {
     return encodedRedirect(
       "success",
-      "/sign-up",
+      "/close-page",
       "Obrigado por se registrar. Verifique seu email para confirmar o cadastro.",
     );
   }
@@ -45,11 +45,17 @@ export const signInAction = async (formData: FormData) => {
     password,
   });
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (error) {
     return encodedRedirect("error", "/sign-in", error.message);
   }
 
-  return redirect("/protected");
+  if (user) {
+    return redirect(`/protected/dashboard?user_id=${user.id}`);
+  }
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {

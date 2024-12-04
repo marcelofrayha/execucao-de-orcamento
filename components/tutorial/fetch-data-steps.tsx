@@ -7,7 +7,7 @@ import { processExcel } from '@/app/data-formater';
 import { processTable } from "@/app/table-formater";
 import { useState } from 'react';
 import { redirect } from 'next/navigation';
-import { FuturisticCard } from "@/components/tutorial/card";
+import { FuturisticCard } from "@/components/ui/card";
 import { Button } from "../ui/button";
 
 const create = `create table notes (
