@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function InitializeProfile() {
+function InitializeProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user_id = searchParams.get('user_id');
@@ -82,5 +82,13 @@ export default function InitializeProfile() {
         </Button>
       </form>
     </div>
+  );
+}
+
+export default function InitializeProfile() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <InitializeProfileContent />
+    </Suspense>
   );
 } 
