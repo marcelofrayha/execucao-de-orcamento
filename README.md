@@ -1,96 +1,135 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
-
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
-
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
-
-## Features
-
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
-
-## Demo
-
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
-
-## Deploy to Vercel
-
-Vercel deployment will guide you through creating a Supabase account and project.
-
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
-
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
-
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
-
-## Clone and run locally
-
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
-
-   ```bash
-   npx create-next-app -e with-supabase
-   ```
-
-3. Use `cd` to change into the app's directory
-
-   ```bash
-   cd name-of-new-app
-   ```
-
-4. Rename `.env.example` to `.env.local` and update the following:
-
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
-
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://app.supabase.com/project/_/settings/api)
-
-5. You can now run the Next.js local development server:
-
-   ```bash
-   npm run dev
-   ```
-
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
-
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
-
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
-
-## Feedback and issues
-
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
-
-## More Supabase examples
-
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+Análise de Orçamento Municipal da KOI
+Análise de Orçamento Municipal da KOI é uma aplicação web projetada para auxiliar governos municipais na gestão e análise eficiente de seus orçamentos. A plataforma oferece análises financeiras avançadas, projeções orçamentárias e relatórios personalizáveis para apoiar a tomada de decisões estratégicas. Construída com tecnologias modernas, o sistema garante escalabilidade, segurança e uma experiência de usuário fluida.
+📋 Índice
+- [Características](#🌟-características)
+- [Arquitetura](#🏗️-arquitetura)
+- [Tecnologias Utilizadas](#🛠️-tecnologias-utilizadas)
+- [Instalação](#🔧-instalação)
+- [Uso](#🚀-uso)
+- [Estrutura do Projeto](#📂-estrutura-do-projeto)
+- [Endpoints da API](#📚-endpoints-da-api)
+- [Considerações de Segurança](#🔒-considerações-de-segurança)
+- [Escalabilidade e Desempenho](#📈-escalabilidade-e-desempenho)
+- [Contribuição](#🤝-contribuição)
+- [Licença](#📄-licença)
+- [Contato](#📞-contato)
+🌟 Características
+- [Autenticação Segura](#autenticação-segura)
+- [Dashboard Interativo](#dashboard-interativo)
+- [Projeções Orçamentárias](#projeções-orçamentárias)
+- [Upload de Dados](#upload-de-dados)
+- [Relatórios Personalizados](#relatórios-personalizados)
+- [Interface Responsiva](#interface-responsiva)
+- [Estilo Moderno](#estilo-moderno)
+🏗️ Arquitetura
+A aplicação segue uma [Arquitetura Serverless](#arquitetura-serverless) utilizando Next.js para o frontend e Supabase para os serviços de backend. O hospedagem é gerenciado via Vercel, garantindo desempenho e escalabilidade ótimos.
+🛠️ Tecnologias Utilizadas
+- **Frontend**
+  - [Next.js](https://nextjs.org/): Framework para aplicações React com renderização no servidor.
+  - [React](https://reactjs.org/): Biblioteca JavaScript para construir interfaces de usuário.
+  - [Tailwind CSS](https://tailwindcss.com/): Framework CSS utilitário para estilização rápida.
+  - [shadcn/ui](https://shadcn.com/): Componentes UI acessíveis e personalizáveis.
+  - [React Icons](https://react-icons.github.io/react-icons/): Biblioteca de ícones populares.
+  - [Chart.js](https://www.chartjs.org/) & [react-chartjs-2](https://github.com/reactchartjs/react-chartjs-2): Bibliotecas para visualização de dados em gráficos.
+- **Backend**
+  - [Supabase](https://supabase.com/): Backend como serviço fornecendo autenticação, banco de dados e armazenamento.
+  - [PostgreSQL](https://www.postgresql.org/): Banco de dados relacional para armazenamento de dados estruturados.
+  - Next.js API Routes: Funções serverless para lógica de backend.
+🔧 Instalação
+1. Clonar o Repositório
+koi
+2. Instalar as Dependências
+Certifique-se de ter o Node.js instalado.
+install
+3. Configurar Variáveis de Ambiente
+Renomeie o arquivo .env.example para .env.local e preencha os valores necessários:
+Você pode encontrar NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY nas configurações de API do seu projeto Supabase.
+4. Executar o Servidor de Desenvolvimento
+dev
+A aplicação estará disponível em http://localhost:3000.
+🚀 Uso
+Registro e Autenticação
+Acesse a página de cadastro (/sign-up) para criar uma nova conta.
+Após o registro, verifique seu email para confirmar a conta.
+Faça login na página de entrada (/sign-in).
+Inicialização do Perfil
+Após autenticação, você será redirecionado para inicializar seu perfil, fornecendo informações adicionais sobre o município.
+Upload de Dados Financeiros
+Navegue até o dashboard protegido para fazer upload de arquivos XLSX contendo dados de despesas e receitas.
+Análise e Visualização
+Utilize as ferramentas de visualização para analisar os dados financeiros e gerar projeções orçamentárias.
+📂 Estrutura do Projeto
+A seguir, uma visão geral dos principais diretórios e arquivos do projeto:
+app/page.tsx
+Página principal da aplicação, que inclui seções como Hero, Funcionalidades e Benefícios.
+.
+components/hero.tsx
+Componente Hero que exibe o banner principal com imagem de fundo e chamadas para ação.
+}
+components/FeatureCard.tsx
+Componente de cartão para destacar funcionalidades principais.
+;
+app/api/initialize-profile/route.ts
+Rota API para inicializar o perfil do usuário após o cadastro.
+}
+app/layout.tsx
+Layout raiz da aplicação, incluindo navegação e rodapé.
+}
+app/actions.ts
+Ações do servidor para gerenciar autenticação de usuários.
+;
+📚 Endpoints da API
+Autenticação
+Registrar Usuário
+Endpoint: /sign-up
+Método: POST
+Descrição: Registra um novo usuário e envia um email de verificação.
+Fazer Login
+Endpoint: /sign-in
+Método: POST
+Descrição: Autentica um usuário existente.
+Inicialização do Perfil
+Inicializar Perfil
+Endpoint: /api/initialize-profile
+Método: POST
+Descrição: Armazena informações adicionais do perfil do usuário na tabela municipios.
+Gestão de Dados
+Upload de Despesas e Receitas
+Endpoint: /api/upload-data
+Método: POST
+Descrição: Trata a ingestão de dados financeiros a partir de arquivos XLSX para o banco de dados.
+Rotas Protegidas
+Dashboard
+Endpoint: /protected/dashboard
+Método: GET
+Descrição: Recupera e exibe dados financeiros agregados para análise.
+🔒 Considerações de Segurança
+Autenticação e Autorização
+Utiliza Supabase Auth para garantir acesso seguro aos recursos protegidos.
+Rotas protegidas são guardadas para evitar acesso não autorizado.
+Validação e Sanitização de Dados
+Entradas dos usuários e arquivos importados são validados tanto no cliente quanto no servidor para prevenir injeção de dados maliciosos.
+Variáveis de Ambiente
+Informações sensíveis, como chaves do Supabase e URLs de APIs, são armazenadas de forma segura como variáveis de ambiente no Vercel.
+Encriptação HTTPS
+Todas as comunicações são protegidas via HTTPS para garantir a segurança dos dados em trânsito.
+📈 Escalabilidade e Desempenho
+Arquitetura Serverless
+Aproveita as funções serverless do Vercel para garantir que a aplicação escale automaticamente conforme o tráfego.
+Consultas Otimizadas
+Modelagem eficiente do banco de dados e indexação para lidar com grandes volumes de dados de forma eficaz.
+Caching
+Implementa estratégias de caching no lado do cliente para reduzir chamadas redundantes e melhorar os tempos de carregamento.
+🤝 Contribuição
+Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou submeter pull requests para melhorar este projeto.
+Fork este repositório
+Crie uma branch para sua feature (git checkout -b feature/nova-feature)
+Commit suas alterações (git commit -m 'Adiciona nova feature')
+Faça o push para a branch (git push origin feature/nova-feature)
+Abra um Pull Request
+📄 Licença
+Este projeto está licenciado sob a Licença MIT.
+📞 Contato
+Para quaisquer dúvidas ou sugestões, entre em contato:
+Email: contato@institutokoi.org
+Facebook: Instituto KOI
