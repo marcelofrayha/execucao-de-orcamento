@@ -29,6 +29,8 @@ export default function RootLayout({
     <html lang="pt-BR" className={GeistSans.className} suppressHydrationWarning>
       <head>
         <meta name="viewport" content={viewport} />
+        <meta name="solana-no-auto-connect" content="true" />
+        <meta name="dapp-no-auto-connect" content="true" />
       </head>
       <body className="bg-background text-foreground">
         <ThemeProvider
