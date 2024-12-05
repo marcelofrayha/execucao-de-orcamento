@@ -18,19 +18,22 @@ export const signUpAction = async (formData: FormData) => {
     password,
     options: {
       emailRedirectTo: `${baseUrl}/auth/callback`,
+      data: {
+        redirect_url: `${baseUrl}/auth/callback`
+      }
     },
   });
 
   if (error) {
     console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
-  } else {
-    return encodedRedirect(
-      "success",
-      "/close-page",
-      "Obrigado por se registrar. Verifique seu email para confirmar o cadastro.",
-    );
   }
+  
+  return encodedRedirect(
+    "success",
+    "/close-page",
+    "Obrigado por se registrar. Verifique seu email para confirmar o cadastro.",
+  );
 };
 
 export const signInAction = async (formData: FormData) => {

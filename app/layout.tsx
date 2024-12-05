@@ -7,15 +7,18 @@ import { ThemeProvider } from "next-themes";
 import Link from "next/link";
 import "./globals.css";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+const defaultUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Análise de Orçamento Municipal",
   description: "Inclua os dados da despesa e receita mensal do município para estimar a adequação do orçamento",
+  charset: "utf-8",
+  robots: "index, follow",
+  keywords: "orçamento municipal, análise financeira, KOI",
 };
+
+export const viewport = "width=device-width, initial-scale=1";
 
 export default function RootLayout({
   children,
@@ -23,7 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={GeistSans.className} suppressHydrationWarning>
+    <html lang="pt-BR" className={GeistSans.className} suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content={viewport} />
+      </head>
       <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
