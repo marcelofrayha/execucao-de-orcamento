@@ -36,8 +36,8 @@ export function TabelaProjecao({ dados, selectedMonth }: TabelaProjecaoProps) {
         <table className="min-w-full border border-gray-300 dark:border-gray-700">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-800">
-              <th className="px-4 py-2 text-center">Fonte de Recurso</th>
               <th className="px-4 py-2 text-center">Categoria</th>
+              <th className="px-4 py-2 text-center">Fonte de Recurso</th>
               <th className="px-4 py-2 text-center">Empenhado</th>
               <th className="px-4 py-2 text-center">Orçamento Atual</th>
               <th className="px-4 py-2 text-center">Projeção Orçamento</th>
@@ -50,8 +50,8 @@ export function TabelaProjecao({ dados, selectedMonth }: TabelaProjecaoProps) {
               .filter(item => item.analise.projecaoFinalAno !== 0)
               .map((item, index) => (
                 <tr key={index} className="border-t border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td className="px-4 py-2 text-center">{item.fonte_recurso}</td>
                   <td className="px-4 py-2 text-center">{item.elemento_despesa}</td>
+                  <td className="px-4 py-2 text-center">{item.fonte_recurso}</td>
                   <td className="px-4 py-2 text-center">
                     {item.valores.total_empenhado.toLocaleString('pt-BR', { 
                       style: 'currency', 

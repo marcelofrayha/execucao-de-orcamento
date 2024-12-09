@@ -223,26 +223,33 @@ function DashboardContent() {
   const [historicalDespesas, setHistoricalDespesas] = useState<any[]>([]);
   const [despesasPorUnidadeFonte, setDespesasPorUnidadeFonte] = useState<Array<{ unidade_fonte: string, valores: ValoresAgregados }>>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [despesasPorCategoriaFonte, setDespesasPorCategoriaFonte] = useState<Array<{ 
+    categoria_fonte: string, 
+    valores: ValoresAgregados 
+  }>>([]);
   
   const searchParams = useSearchParams()
   const router = useRouter()
   const user_id = searchParams.get('user_id')
 
-  const dadosProjecao = despesasPorElemento.map(item => ({
-    ...item,
-    fonte_recurso: 'Todas',
-    valores: {
-      total_empenhado: item.valores.total_empenhado,
-      total_saldo: item.valores.total_saldo
-    },
-    analise: calcularProjecaoEmpenho(
-      dadosHistoricos,
-      selectedMonth,
-      item.valores.total_empenhado,
-      item.valores.total_saldo,
-      selectedYear
-    )
-  }))
+  const dadosProjecao = despesasPorCategoriaFonte.map(item => {
+    const [elemento_despesa, fonte_recurso] = item.categoria_fonte.split(' - ');
+    return {
+      elemento_despesa,
+      fonte_recurso,
+      valores: {
+        total_empenhado: item.valores.total_empenhado,
+        total_saldo: item.valores.total_saldo
+      },
+      analise: calcularProjecaoEmpenho(
+        dadosHistoricos,
+        selectedMonth,
+        item.valores.total_empenhado,
+        item.valores.total_saldo,
+        selectedYear
+      )
+    };
+  });
 
   const receitasPorFonteComProjecao = receitasPorFonte.map(item => ({
     ...item,
@@ -603,6 +610,38 @@ function DashboardContent() {
             unidadeToColorMap[unidade] = colorClasses[Object.keys(unidadeToColorMap).length % colorClasses.length];
           }
         });
+
+        // Agregar despesas por Categoria e Fonte de Recurso
+        const categoriaFonteMap = new Map<string, ValoresAgregados>();
+
+        despesasDisplay.forEach((d) => {
+          const mappedCategoria = agregadorElementoDespesa[String(d.elemento_despesa)] || d.elemento_despesa;
+          const mappedFonte = agregadorFonteRecurso[String(d.fonte_de_recurso)] || d.fonte_de_recurso;
+
+          const chave = `${mappedCategoria} - ${mappedFonte}`;
+
+          const existing = categoriaFonteMap.get(chave) || { 
+            total_orcado: 0, 
+            total_saldo: 0, 
+            total_empenhado: 0 
+          };
+          
+          categoriaFonteMap.set(chave, {
+            total_orcado: existing.total_orcado + (d.orcado || 0),
+            total_saldo: existing.total_saldo + (d.saldo || 0),
+            total_empenhado: existing.total_empenhado + (d.empenhado || 0)
+          });
+        });
+
+        // Transform the Map into an array for rendering
+        setDespesasPorCategoriaFonte(
+          Array.from(categoriaFonteMap.entries())
+            .map(([chave, valores]) => ({
+              categoria_fonte: chave,
+              valores
+            }))
+            .sort((a, b) => b.valores.total_empenhado - a.valores.total_empenhado)
+        );
 
         setLoading(false);
 
