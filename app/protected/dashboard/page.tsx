@@ -256,8 +256,8 @@ function DashboardContent() {
     analise: calcularProjecaoReceita(
       dadosHistoricosReceitas,
       selectedMonth,
-      item.total_receita,
-      item.total_saldo,
+      item.total_receita - (item.total_receita / 12),
+      item.total_saldo - (item.total_saldo / 12),
       selectedYear
     )
   }))
