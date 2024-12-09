@@ -31,9 +31,10 @@ export interface DadoHistoricoReceitaAgregado {
   export interface ResultadoProjecaoReceita {
     projecaoFinalAnoReceita: number;
     percentualReceitaExecutado: number;
-    percentualReceitaExecutadoTotal: number;  // Added for total projection
+    percentualReceitaExecutadoTotal: number;
     statusReceitaExecucao: 'adequado' | 'abaixo' | 'acima';
-    statusReceitaExecucaoTotal: 'adequado' | 'abaixo' | 'acima';  // Added for total projection
+    statusReceitaExecucaoTotal: 'adequado' | 'abaixo' | 'acima';
+    proporcaoMediaHistorica: number;
   }
 
   // Constantes
@@ -333,7 +334,7 @@ export interface DadoHistoricoReceitaAgregado {
       });
     });
 
-    // Calcular média ponderada das proporções
+    // Calculate weighted average of proportions
     const proporcaoMediaHistorica = somaPesos > 0 ? somaProporcoesComPeso / somaPesos : 0;
 
     // Projetar receita final do ano com base na média histórica ponderada
@@ -380,6 +381,7 @@ export interface DadoHistoricoReceitaAgregado {
       percentualReceitaExecutadoTotal,
       statusReceitaExecucao,
       statusReceitaExecucaoTotal,
+      proporcaoMediaHistorica,
     };
   }
 

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { DashboardHeader } from '@/components/ui/header'
+import { Input } from '@/components/ui/input'
 
 // Import Graph Components
 import DespesasGraph from './components/DespesasGraph'
@@ -227,6 +228,8 @@ function DashboardContent() {
     categoria_fonte: string, 
     valores: ValoresAgregados 
   }>>([]);
+  const [deduction, setDeduction] = useState<number>(0)
+  const [submittedDeduction, setSubmittedDeduction] = useState<number>(0)
   
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -302,6 +305,25 @@ function DashboardContent() {
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = parseInt(e.target.value, 10)
     setSelectedYear(isNaN(value) ? currentYear : value)
+  }
+
+  const handleDeductionSubmit = () => {
+    setSubmittedDeduction(deduction)
+  }
+
+  const headerRevenueTotals = {
+    saldoReceita: totals.receitaFonte.total_saldo,
+    receitaMes: totals.receitaFonte.total_receita,
+    projecaoReceita: receitasPorFonteComProjecao.reduce(
+      (acc, item) => {
+        return acc + (item.analise?.projecaoFinalAnoReceita || 0);
+      }, 
+      0
+    ) - (submittedDeduction / (receitasPorFonteComProjecao[0]?.analise?.proporcaoMediaHistorica || 1)),
+    percentualReceitaProjetada: receitasPorFonteComProjecao.reduce(
+      (acc, item) => acc + (item.analise?.percentualReceitaExecutado || 0), 
+      0
+    ) / receitasPorFonteComProjecao.length
   }
 
   useEffect(() => {
@@ -694,16 +716,8 @@ function DashboardContent() {
     )
   }
 
-  // Calculate revenue totals for header
-  const headerRevenueTotals = {
-    saldoReceita: totals.receitaFonte.total_saldo,
-    receitaMes: totals.receitaFonte.total_receita,
-    projecaoReceita: receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.projecaoFinalAnoReceita || 0), 0),
-    percentualReceitaProjetada: receitasPorFonteComProjecao.reduce((acc, item) => acc + (item.analise?.percentualReceitaExecutado || 0), 0) / receitasPorFonteComProjecao.length
-  };
-
-  // Definir um array de classes de cores disponíveis
-  const colorClasses = [
+   // Definir um array de classes de cores disponíveis
+   const colorClasses = [
     'bg-gray-100 dark:bg-gray-900',
     'bg-white dark:bg-black',
   ];
@@ -718,7 +732,6 @@ function DashboardContent() {
       unidadeToColorMap[unidade] = colorClasses[Object.keys(unidadeToColorMap).length % colorClasses.length];
     }
   });
-
   if (loading) {
     return <p>Carregando perfil...</p>;
   }
@@ -770,6 +783,38 @@ function DashboardContent() {
         >
           Inserir Dados
         </Link>
+      </div>
+
+      <div className="flex items-center gap-4 bg-muted/50 p-4 rounded-lg">
+        <div className="flex-1">
+          <label htmlFor="deduction" className="block text-sm font-medium mb-2">
+            Dedução da Projeção
+          </label>
+          <div className="flex gap-2">
+            <Input
+              id="deduction"
+              type="number"
+              value={deduction}
+              onChange={(e) => setDeduction(Number(e.target.value))}
+              placeholder="Valor a deduzir da projeção"
+              className="flex-1"
+            />
+            <Button onClick={handleDeductionSubmit}>
+              Aplicar Dedução
+            </Button>
+          </div>
+        </div>
+        {submittedDeduction > 0 && (
+          <div className="text-sm">
+            <p className="font-medium">Dedução Aplicada:</p>
+            <p className="text-muted-foreground">
+              {submittedDeduction.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+              })}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Header with statistics */}
